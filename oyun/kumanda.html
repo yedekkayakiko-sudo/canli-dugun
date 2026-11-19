@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Düğün Kumandası</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --zemin: #140a18; --kart: #22142a; --kenar: #3a2a44; --yazi: #f6ecf9; --soluk: #b9a6c4; --vurgu: #ffd54a; --pembe: #e91e63; --mor: #7c4dff; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; background: var(--zemin); color: var(--yazi); font-family: 'Baloo 2', system-ui, sans-serif; padding: 16px; max-width: 560px; margin-inline: auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; color: var(--vurgu); }
+  .baglanti { font-size: 13px; color: var(--soluk); margin-bottom: 14px; }
+  .baglanti b.acik { color: #69f0ae; } .baglanti b.kapali { color: #ff8a80; }
+  .kart { background: var(--kart); border: 1px solid var(--kenar); border-radius: 18px; padding: 14px; margin-bottom: 14px; }
+  .etiket { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--soluk); margin-bottom: 4px; }
+  .calan { font-size: 22px; font-weight: 800; line-height: 1.2; overflow-wrap: anywhere; }
+  .alt { font-size: 14px; color: var(--soluk); }
+  .izgara { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  button { font: inherit; font-weight: 800; font-size: 18px; border: 0; border-radius: 16px; padding: 16px 10px; color: #fff; background: #3a2a44; cursor: pointer; touch-action: manipulation; }
+  button:active { transform: scale(.97); }
+  button.buyuk { grid-column: 1 / -1; font-size: 22px; padding: 20px; }
+  .acik-m { background: var(--pembe); } .kapali-m { background: #4a4a4a; }
+  .liste { display: flex; flex-direction: column; gap: 8px; max-height: 50vh; overflow-y: auto; }
+  .satir { display: flex; align-items: center; gap: 10px; background: #1a0f20; border-radius: 12px; padding: 10px 12px; }
+  .satir .ad { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .satir button { font-size: 15px; padding: 8px 14px; border-radius: 10px; background: var(--mor); flex-shrink: 0; }
+  .satir button.sil { background: #5d2a35; }
+  .bos { color: var(--soluk); font-size: 14px; }
+  input { width: 100%; font: inherit; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--kenar); background: #1a0f20; color: #fff; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+  <h1>📱 Düğün Kumandası</h1>
+  <div class="baglanti">Oyun: <b id="baglanti" class="kapali">bağlanıyor…</b> <span id="tur"></span></div>
+
+  <div class="kart">
+    <div class="etiket">Şimdi çalıyor</div>
+    <div class="calan" id="calan">—</div>
+    <div class="alt" id="calanAlt"></div>
+  </div>
+
+  <div class="izgara" style="margin-bottom:14px">
+    <button class="buyuk acik-m" id="muzik">🔊 Müzik AÇIK</button>
+    <button id="sonraki">⏭ Sonraki</button>
+    <button id="turBitir">⏹ Düğünü bitir</button>
+    <button id="sesEksi">🔉 Ses −</button>
+    <button id="sesArti">🔊 Ses + <span id="ses"></span></button>
+  </div>
+
+  <div class="kart">
+    <div class="etiket">İstek sırası</div>
+    <div class="liste" id="istekler"><div class="bos">İstek yok</div></div>
+  </div>
+
+  <div class="kart">
+    <div class="etiket">Şarkılarım (dokun → hemen çal)</div>
+    <input id="ara" placeholder="🔍 Şarkı ara…">
+    <div class="liste" id="sarkilar"><div class="bos">Klasörde şarkı yok — oyun/sarkilar içine MP3 atın</div></div>
+  </div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let ws, son = null;
+  const gonder = (o) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ tip: "komut", ...o })); };
+
+  function baglan() {
+    ws = new WebSocket(`ws://${location.host || "localhost:8080"}`);
+    ws.onopen = () => { $("baglanti").textContent = "köprüye bağlı, oyun bekleniyor…"; $("baglanti").className = "acik"; };
+    ws.onclose = () => { $("baglanti").textContent = "bağlı değil"; $("baglanti").className = "kapali"; setTimeout(baglan, 2000); };
+    ws.onmessage = (m) => { try { const o = JSON.parse(m.data); if (o.tip === "oyunDurum") ciz(o); } catch (e) {} };
+  }
+  baglan();
+
+  function ciz(d) {
+    son = d;
+    $("baglanti").textContent = "oyun bağlı ✅";
+    $("tur").textContent = `• Düğün #${d.turNo}${d.kalan != null ? ` • ${Math.floor(d.kalan / 60)}:${String(d.kalan % 60).padStart(2, "0")}` : ""} • halayda ${d.halay} kişi`;
+    $("calan").textContent = (d.calan.mp3 ? "📀 " : "🎹 ") + d.calan.sarki;
+    $("calanAlt").textContent = d.calan.kimden ? `istek: @${d.calan.kimden}` : (d.calan.mp3 ? "çalma listesi" : "orgcu (telifsiz)");
+    $("muzik").textContent = d.muzikAcik ? "🔊 Müzik AÇIK — kapatmak için dokun" : "🔇 Müzik KAPALI — açmak için dokun";
+    $("muzik").className = "buyuk " + (d.muzikAcik ? "acik-m" : "kapali-m");
+    $("ses").textContent = `%${d.ses}`;
+
+    const ist = $("istekler"); ist.innerHTML = "";
+    if (!d.istekler.length) ist.innerHTML = '<div class="bos">İstek yok</div>';
+    d.istekler.forEach((r, i) => {
+      const s = document.createElement("div"); s.className = "satir";
+      const ad = document.createElement("div"); ad.className = "ad";
+      ad.textContent = `${r.oncelik ? "⭐ " : ""}${r.mp3 ? "📀 " : "🎹 "}${r.sarki} — @${r.kimden || "?"}`;
+      const sil = document.createElement("button"); sil.className = "sil"; sil.textContent = "Sil";
+      sil.onclick = () => gonder({ komut: "istekSil", sira: i });
+      s.append(ad, sil); ist.appendChild(s);
+    });
+    sarkilariCiz();
+  }
+
+  let sonListe = "";
+  function sarkilariCiz() {
+    if (!son) return;
+    const q = $("ara").value.toLocaleLowerCase("tr");
+    const liste = son.sarkilar.filter(d => d.toLocaleLowerCase("tr").includes(q));
+    const anahtar = q + "|" + liste.join("|");
+    if (anahtar === sonListe) return; sonListe = anahtar;
+    const kutu = $("sarkilar"); kutu.innerHTML = "";
+    if (!liste.length) kutu.innerHTML = `<div class="bos">${son.sarkilar.length ? "Sonuç yok" : "Klasörde şarkı yok — oyun/sarkilar içine MP3 atın"}</div>`;
+    liste.forEach(d => {
+      const s = document.createElement("div"); s.className = "satir";
+      const ad = document.createElement("div"); ad.className = "ad"; ad.textContent = d.replace(/\.[^.]+$/, "");
+      const b = document.createElement("button"); b.textContent = "▶ Çal";
+      b.onclick = () => gonder({ komut: "cal", dosya: d });
+      s.append(ad, b); kutu.appendChild(s);
+    });
+  }
+  $("ara").oninput = sarkilariCiz;
+
+  $("muzik").onclick = () => gonder({ komut: "muzik" });
+  $("sonraki").onclick = () => gonder({ komut: "sonraki" });
+  $("turBitir").onclick = () => { if (confirm("Bu düğün bitirilsin mi?")) gonder({ komut: "turBitir" }); };
+  $("sesArti").onclick = () => gonder({ komut: "sesArti" });
+  $("sesEksi").onclick = () => gonder({ komut: "sesEksi" });
+})();
+</script>
+</body>
+</html>

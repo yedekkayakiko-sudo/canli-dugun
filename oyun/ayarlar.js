@@ -24,6 +24,13 @@ window.AYAR = {
   muzikSes: 0.55,
   efektSes: 0.7,
 
+  // ----------------------------------------------------------
+  //  KENDİ ŞARKILARINIZ (oyun/sarkilar klasörüne MP3 atın)
+  // ----------------------------------------------------------
+  mp3Ses: 0.9,              // MP3 ses seviyesi (0-1)
+  mp3EnFazlaSaniye: 0,      // 0 = şarkının tamamı. Ör: 90 → her şarkı 90 sn sonra kısılıp biter
+  bosOldugundaMp3: true,    // istek yokken klasörden rastgele şarkı çalsın (false = orgcu çalar)
+
   // Yorumlar ekranda kaç saniye balon olarak görünsün
   balonSuresi: 5,
 

@@ -165,6 +165,7 @@
   }
 
   function adimCal(t) {
+    if (mp3Calan) { adim++; if (adim % tarz.adimSayisi === 0) olcu++; return; } // MP3 çalarken org susar
     const dz = t < davulZurnaBitis;
     const n = tarz.adimSayisi;
     const i = adim % n;
@@ -228,6 +229,15 @@
   // 0..1 arası "nabız": son düm'den bu yana geçen süreye göre (görsel senkron için)
   M.nabiz = function () {
     if (!ctx || !calisiyor) return 0;
+    if (mp3Calan && analiz) {
+      // Şarkının bas enerjisinden vuruş yakala → halay gerçek şarkıyla oynar
+      analiz.getByteFrequencyData(fftBuf);
+      let e = 0; for (let i = 1; i < 7; i++) e += fftBuf[i];
+      e /= 6 * 255;
+      enerjiOrt = enerjiOrt * 0.96 + e * 0.04;
+      anlikNabiz = Math.max(anlikNabiz * 0.86, Math.min(1, Math.max(0, (e - enerjiOrt) * 5)));
+      return anlikNabiz;
+    }
     const now = ctx.currentTime;
     let son = null;
     for (let i = dumZamanlari.length - 1; i >= 0; i--) if (dumZamanlari[i] <= now) { son = dumZamanlari[i]; break; }
@@ -297,6 +307,60 @@
     dum(t + 1.2, 1.6, efektGain);
     tek(t + 1.2, 1.4, efektGain);
   });
+
+  // ---------- MP3 (sarkilar klasörü) ----------
+  let mp3El = null, mp3Gain = null, analiz = null, fftBuf = null, mp3Calan = false, mp3Zaman = null;
+  let muzikAcikMi = true, mp3SesDegeri = (window.AYAR?.mp3Ses ?? 0.9);
+  let enerjiOrt = 0.2, anlikNabiz = 0;
+
+  function seviyeleriUygula() {
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    muzikGain.gain.setTargetAtTime(muzikAcikMi && !mp3Calan ? (window.AYAR?.muzikSes ?? 0.5) : 0, t, 0.12);
+    if (mp3Gain) mp3Gain.gain.setTargetAtTime(muzikAcikMi ? mp3SesDegeri : 0, t, 0.12);
+  }
+
+  // bitince(hataMi) şarkı bitince / çalınamazsa çağrılır
+  M.mp3Cal = function (url, bitince) {
+    M.baslat(); M.mp3Durdur();
+    if (!mp3Gain) {
+      mp3Gain = ctx.createGain(); analiz = ctx.createAnalyser(); analiz.fftSize = 256;
+      fftBuf = new Uint8Array(analiz.frequencyBinCount);
+      mp3Gain.connect(ana); mp3Gain.connect(analiz);
+    }
+    const el = new Audio(url); el.preload = "auto";
+    ctx.createMediaElementSource(el).connect(mp3Gain);
+    mp3El = el; mp3Calan = true; seviyeleriUygula();
+    const bit = (hata) => { if (mp3El !== el) return; M.mp3Durdur(); bitince && bitince(!!hata); };
+    el.onended = () => bit(false);
+    el.onerror = () => bit(true);
+    const sinir = window.AYAR?.mp3EnFazlaSaniye || 0;
+    if (sinir > 0) mp3Zaman = setTimeout(() => {
+      if (mp3El !== el) return;
+      mp3Gain.gain.setTargetAtTime(0, ctx.currentTime, 0.6);   // yumuşak kısılma
+      setTimeout(() => bit(false), 2500);
+    }, sinir * 1000);
+    el.play().catch(() => bit(true));
+  };
+
+  M.mp3Durdur = function () {
+    clearTimeout(mp3Zaman);
+    if (mp3El) { const el = mp3El; mp3El = null; el.onended = el.onerror = null; el.pause(); }
+    mp3Calan = false; seviyeleriUygula();
+  };
+  M.mp3CaliyorMu = () => mp3Calan;
+  M.mp3Ilerleme = () => (mp3El && mp3El.duration ? mp3El.currentTime / mp3El.duration : 0);
+
+  // Oyunun TÜM müziğini (org + MP3) aç/kapa. Efekt sesleri (zılgıt, altın) devam eder.
+  M.muzikAc = function (v) { muzikAcikMi = v === undefined ? !muzikAcikMi : !!v; seviyeleriUygula(); return muzikAcikMi; };
+  M.muzikAcikMi = () => muzikAcikMi;
+  M.sesDegistir = function (fark) {
+    mp3SesDegeri = Math.max(0, Math.min(1, mp3SesDegeri + fark));
+    if (window.AYAR) AYAR.muzikSes = Math.max(0, Math.min(1, (AYAR.muzikSes ?? 0.5) + fark * 0.6));
+    seviyeleriUygula();
+    return Math.round(mp3SesDegeri * 100);
+  };
+  M.sesSeviyesi = () => Math.round(mp3SesDegeri * 100);
 
   window.Muzik = M;
 })();

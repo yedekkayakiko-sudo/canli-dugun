@@ -36,6 +36,7 @@
     anonslar: [], anons: null,
     kismetler: [], kismet: null,
     sovlar: [], sov: null, dansBekliyor: false,
+    mp3Listesi: [], sonMp3: null, mp3Hata: -999,
     tabloSekme: 0,
   };
 
@@ -291,24 +292,106 @@
     sarki = sarki.replace(/\s+/g, " ").trim().slice(0, 34);
     if (sarki.length < 2) return;
     S.istekler = S.istekler.filter(i => i.kimden !== k.id);
-    S.istekler.push({ sarki, kimden: k.id, oncelik: k.puanToplam > 0, zaman: simdi() });
+    const dosya = eslestir(sarki);
+    S.istekler.push({ sarki: dosya ? dosyaAdi(dosya) : sarki, dosya, kimden: k.id, oncelik: k.puanToplam > 0, zaman: simdi() });
     S.istekler.sort((a, b) => (b.oncelik - a.oncelik) || (a.zaman - b.zaman));
     S.istekler = S.istekler.slice(0, 12);
-    k.balon = { metin: `🎵 İstek: ${sarki}`, bitis: simdi() + 4 };
+    k.balon = { metin: dosya ? `📀 ${dosyaAdi(dosya)} — listede var!` : `🎵 İstek: ${sarki}`, bitis: simdi() + 4 };
     if (!S.calan.kimden) sarkiDegistir();
   }
 
-  function sarkiDegistir() {
-    const sira = S.istekler.shift();
-    if (sira) {
-      S.calan = { sarki: sira.sarki, kimden: sira.kimden, bas: simdi(), bitis: simdi() + 80 };
-      const k = S.kisiler.get(sira.kimden);
-      anons(`🎹 Orgcu çalıyor: "${sira.sarki}" — istek: ${kisaAd(k, 18)}`, "#b388ff");
-    } else {
-      const ad = VARSAYILAN_HAVALAR[Math.floor(Math.random() * VARSAYILAN_HAVALAR.length)];
-      S.calan = { sarki: ad, kimden: null, bas: simdi(), bitis: simdi() + 70 };
+  // ---------- Şarkı klasörü (oyun/sarkilar) ----------
+  function norm(x) {
+    return kucuk(x).replace(/\.(mp3|m4a|ogg|wav)$/, "")
+      .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u").replace(/[âä]/g, "a")
+      .replace(/[^a-z0-9]+/g, " ").trim();
+  }
+  function dosyaAdi(d) { return d.replace(/\.[^.]+$/, "").replace(/[_]+/g, " ").trim(); }
+
+  // İzleyicinin yazdığını klasördeki dosya adlarıyla karşılaştır (Türkçe karakter / yazım farkına dayanıklı)
+  function eslestir(istek) {
+    const q = norm(istek);
+    if (q.length < 2 || !S.mp3Listesi.length) return null;
+    const kel = q.split(" ").filter(w => w.length >= 2);
+    let en = null, enPuan = 0;
+    for (const d of S.mp3Listesi) {
+      const n = norm(d);
+      const puan = n.includes(q) ? 1 : kel.length ? kel.filter(w => n.includes(w)).length / kel.length : 0;
+      if (puan > enPuan) { enPuan = puan; en = d; }
     }
-    if (window.Muzik) S.calan.tarz = Muzik.sarki(S.calan.sarki);
+    return enPuan >= 0.6 ? en : null;
+  }
+
+  function listeYukle() {
+    if (!/^https?:/.test(location.protocol)) return;   // dosyadan açıldıysa liste yok
+    fetch("sarkilar.json", { cache: "no-store" }).then(r => r.ok ? r.json() : []).then(l => {
+      if (!Array.isArray(l)) return;
+      const ilk = !S.mp3Listesi.length && l.length;
+      S.mp3Listesi = l;
+      // İlk kez şarkı bulunduysa ve istek çalmıyorsa hemen listeden başla
+      if (ilk && A.bosOldugundaMp3 && !S.calan.kimden && !S.calan.mp3) sarkiDegistir();
+    }).catch(() => {});
+  }
+
+  function sarkiDegistir(secim) {
+    const sira = secim || S.istekler.shift();
+    const mp3Olur = window.Muzik && simdi() - S.mp3Hata > 15;
+    let ad, kimden = null, dosya = null;
+    if (sira) {
+      kimden = sira.kimden || null;
+      dosya = mp3Olur ? (sira.dosya || eslestir(sira.sarki)) : null;
+      ad = dosya ? dosyaAdi(dosya) : sira.sarki;
+    } else if (mp3Olur && A.bosOldugundaMp3 && S.mp3Listesi.length) {
+      const aday = S.mp3Listesi.length > 1 ? S.mp3Listesi.filter(d => d !== S.sonMp3) : S.mp3Listesi;
+      dosya = aday[Math.floor(Math.random() * aday.length)];
+      ad = dosyaAdi(dosya);
+    } else {
+      ad = VARSAYILAN_HAVALAR[Math.floor(Math.random() * VARSAYILAN_HAVALAR.length)];
+    }
+    const calan = { sarki: ad, kimden, bas: simdi(), bitis: 0, mp3: !!dosya, secim: !!(sira && !sira.kimden) };
+    S.calan = calan;
+    if (dosya) {
+      S.sonMp3 = dosya;
+      calan.bitis = Infinity; calan.tarz = "📀 orijinal kayıt";
+      Muzik.mp3Cal("sarkilar/" + encodeURIComponent(dosya), (hata) => {
+        if (hata) S.mp3Hata = simdi();
+        if (S.calan === calan) calan.bitis = 0;
+      });
+    } else {
+      if (window.Muzik) { Muzik.mp3Durdur(); calan.tarz = "🎹 " + Muzik.sarki(ad); }
+      calan.bitis = simdi() + (kimden ? 80 : 70);
+    }
+    if (kimden) {
+      const k = S.kisiler.get(kimden);
+      anons(`${dosya ? "📀" : "🎹"} Çalıyor: "${ad}" — istek: ${kisaAd(k, 18)}`, "#b388ff");
+    }
+  }
+
+  // Yayıncı kumandası / klavye komutları
+  function komut(o) {
+    const k = o && o.komut;
+    if (k === "muzik") return window.Muzik && Muzik.muzikAc(o.acik);
+    if (k === "sonraki") return sarkiDegistir();
+    if (k === "cal" && o.dosya) return sarkiDegistir({ sarki: dosyaAdi(o.dosya), dosya: o.dosya });
+    if (k === "sesArti") return window.Muzik && Muzik.sesDegistir(0.1);
+    if (k === "sesEksi") return window.Muzik && Muzik.sesDegistir(-0.1);
+    if (k === "turBitir") { S.turBitis = 0; return; }
+    if (k === "istekSil") { S.istekler.splice(o.sira || 0, 1); return; }
+  }
+
+  function durumOzeti() {
+    const ad = (id) => { const k = S.kisiler.get(id); return k ? k.ad : null; };
+    return {
+      tip: "oyunDurum",
+      calan: { sarki: S.calan.sarki, kimden: ad(S.calan.kimden), mp3: S.calan.mp3 },
+      istekler: S.istekler.slice(0, 10).map(i => ({ sarki: i.sarki, kimden: ad(i.kimden), mp3: !!i.dosya, oncelik: i.oncelik })),
+      muzikAcik: window.Muzik ? Muzik.muzikAcikMi() : true,
+      ses: window.Muzik ? Muzik.sesSeviyesi() : 0,
+      sarkilar: S.mp3Listesi,
+      turNo: S.turNo,
+      kalan: isFinite(S.turBitis) ? Math.max(0, Math.round(S.turBitis - simdi())) : null,
+      halay: S.halay.length,
+    };
   }
 
   // ------------------------------------------------------------
@@ -650,20 +733,22 @@
     c.fillStyle = `rgba(124,77,255,${0.25 + nabiz * 0.25})`; c.fill();
     yazi("▶ ŞİMDİ ÇALIYOR", x + 30, y + 80, 20, "#e1bee7", "left", 700, 3);
     yazi(S.calan.sarki, x + 30, y + 112, 32, "#fff", "left", 800, 5, w - 60);
-    const kimden = S.calan.kimden ? "istek: " + kisaAd(S.kisiler.get(S.calan.kimden), 16) : "orgcunun seçimi";
+    const kimden = S.calan.kimden ? "istek: " + kisaAd(S.kisiler.get(S.calan.kimden), 16) : S.calan.secim ? "yayıncının seçimi" : S.calan.mp3 ? "çalma listesi" : "orgcunun seçimi";
     yazi(`${kimden}  •  ${S.calan.tarz || ""}`, x + 30, y + 140, 19, "#ce93d8", "left", 600, 3, w - 60);
-    const ilerleme = sinirla((t - (S.calan.bas || t)) / Math.max(1, S.calan.bitis - (S.calan.bas || t)), 0, 1);
+    const ilerleme = S.calan.mp3 ? Muzik.mp3Ilerleme() : sinirla((t - (S.calan.bas || t)) / Math.max(1, S.calan.bitis - (S.calan.bas || t)), 0, 1);
     c.fillStyle = "rgba(255,255,255,0.2)"; c.fillRect(x + 30, y + 155, w - 60, 4);
     c.fillStyle = "#b388ff"; c.fillRect(x + 30, y + 155, (w - 60) * ilerleme, 4);
 
     S.istekler.slice(0, 4).forEach((r, i) => {
       const ry = y + 190 + i * 36;
       const k = S.kisiler.get(r.kimden);
-      yazi(`${r.oncelik ? "⭐" : `${i + 1}.`} ${r.sarki}`, x + 26, ry, 24, r.oncelik ? "#ffd54a" : "#fff", "left", 700, 4, 300);
+      yazi(`${r.oncelik ? "⭐" : `${i + 1}.`}${r.dosya ? "📀" : ""} ${r.sarki}`, x + 26, ry, 24, r.oncelik ? "#ffd54a" : "#fff", "left", 700, 4, 300);
       yazi(kisaAd(k, 12), x + w - 22, ry, 20, "#ce93d8", "right", 600, 3);
     });
     if (!S.istekler.length) yazi("!şarkı <şarkı adı> yaz", x + w / 2, y + 240, 28, "#fff", "center", 700, 4);
-    yazi("⭐ Hediye atanın isteği öne geçer", x + w / 2, y + h - 20, 19, "#f8bbd0", "center", 600, 3);
+    const L = S.mp3Listesi, faz = Math.floor(t / 3.5);
+    const alt = L.length && faz % 2 ? `📀 Listede: ${dosyaAdi(L[Math.floor(faz / 2) % L.length])}` : "⭐ Hediye atanın isteği öne geçer";
+    yazi(alt, x + w / 2, y + h - 20, 19, "#f8bbd0", "center", 600, 3, w - 30);
   }
 
   // ------------------------------------------------------------
@@ -1063,6 +1148,7 @@
 
   turBaslat();
   S.calan.bas = simdi(); S.calan.bitis = simdi() + 60;
+  listeYukle(); setInterval(listeYukle, 20000);   // klasöre yeni şarkı atarsanız 20 sn'de görünür
   requestAnimationFrame(dongu);
 
   window.Oyun = {
@@ -1070,6 +1156,7 @@
     durum: S,
     turuBitir: () => { S.turBitis = 0; },
     sarkiAtla: () => sarkiDegistir(),
+    komut, durumOzeti, eslestir,
     sifirla: () => location.reload(),
   };
 })();

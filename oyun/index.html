@@ -79,10 +79,14 @@
 
     <h3>Yayıncı</h3>
     <div class="satir">
-      <button id="turBtn">⏭ Düğünü bitir</button>
-      <button id="sarkiBtn">⏭ Şarkıyı atla</button>
+      <button id="muzikBtn" class="ana">🔊 Müzik: AÇIK</button>
+      <button id="sarkiBtn">⏭ Sonraki şarkı</button>
+      <button id="turBtn">⏹ Düğünü bitir</button>
     </div>
-    <p class="kucuk">Tüm müzik tarayıcıda üretilir, kayıt çalınmaz. Ses OBS / TikTok LIVE Studio'da bu pencereden alınır.</p>
+    <div class="durum" id="sarkiDurum">📀 Şarkı klasörü: yükleniyor…</div>
+    <p class="kucuk"><b>Klavye:</b> <b>M</b> müzik aç/kapa · <b>N</b> sonraki şarkı · <b>+ / −</b> ses · <b>B</b> düğünü bitir<br>
+    📱 <b>Telefondan kumanda:</b> <a href="kumanda.html" target="_blank" style="color:#ffd54a">kumanda.html</a> (adres köprü penceresinde yazar)</p>
+    <p class="kucuk">Kendi şarkılarınız: <b>oyun/sarkilar</b> klasörüne MP3 atın. İzleyici <b>!şarkı</b> ile adını yazınca çalar. Eşleşmezse orgcu kendi telifsiz ezgisini çalar.</p>
   </aside>
 </div>
 
@@ -114,10 +118,42 @@
   function baglan() {
     try { ws = new WebSocket(adres); } catch (e) { return setTimeout(baglan, bekle); }
     ws.onopen = () => { bekle = 1000; $("koprüDurum").textContent = "bağlı"; $("koprüDurum").className = "acik"; };
-    ws.onmessage = (m) => { try { const o = JSON.parse(m.data); if (o.tip === "durum") { $("koprüDurum").textContent = o.metin; return; } Oyun.olay(o); } catch (e) {} };
+    ws.onmessage = (m) => { try {
+      const o = JSON.parse(m.data);
+      if (o.tip === "durum") { $("koprüDurum").textContent = o.metin; return; }
+      if (o.tip === "komut") { Oyun.komut(o); durumGonder(); return; }
+      if (o.tip === "oyunDurum") return;
+      Oyun.olay(o);
+    } catch (e) {} };
     ws.onclose = () => { $("koprüDurum").textContent = "bağlı değil"; $("koprüDurum").className = "kapali"; setTimeout(baglan, bekle); bekle = Math.min(bekle * 2, 10000); };
   }
   baglan();
+
+  // Kumandaya (telefon) durum bildir
+  function durumGonder() { if (ws && ws.readyState === 1) ws.send(JSON.stringify(Oyun.durumOzeti())); }
+  setInterval(durumGonder, 1000);
+
+  // ---------- Müzik kontrolleri: buton + klavye ----------
+  function muzikEtiketi() {
+    const acik = Muzik.muzikAcikMi();
+    $("muzikBtn").textContent = acik ? "🔊 Müzik: AÇIK" : "🔇 Müzik: KAPALI";
+    $("muzikBtn").className = acik ? "ana" : "";
+    const d = Oyun.durumOzeti();
+    $("sarkiDurum").textContent = d.sarkilar.length ? `📀 Klasörde ${d.sarkilar.length} şarkı • Ses %${d.ses}` : "📀 Klasörde şarkı yok (oyun/sarkilar)";
+  }
+  setInterval(muzikEtiketi, 1000);
+  $("muzikBtn").onclick = () => { Oyun.komut({ komut: "muzik" }); muzikEtiketi(); };
+  document.addEventListener("keydown", (e) => {
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.ctrlKey || e.altKey || e.metaKey) return;
+    const t = e.key.toLocaleLowerCase("tr");
+    if (t === "m") Oyun.komut({ komut: "muzik" });
+    else if (t === "n") Oyun.komut({ komut: "sonraki" });
+    else if (t === "b") Oyun.komut({ komut: "turBitir" });
+    else if (e.key === "+" || e.key === "=") Oyun.komut({ komut: "sesArti" });
+    else if (e.key === "-") Oyun.komut({ komut: "sesEksi" });
+    else return;
+    sesBaslat(); muzikEtiketi(); durumGonder();
+  });
 
   // ---------- Test paneli ----------
   const ADLAR = ["ayse_34", "mehmet.dgn", "zeynep_k", "ahmet_yildiz", "elif.ozz", "burak_06", "selin.akk", "emre35",

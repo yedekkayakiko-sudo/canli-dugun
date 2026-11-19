@@ -1,1 +1,3 @@
 node_modules/
+oyun/sarkilar/*
+!oyun/sarkilar/BENIOKU.txt

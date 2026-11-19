@@ -8,6 +8,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { WebSocketServer } from "ws";
 import { TikTokLiveConnection, WebcastEvent, ControlEvent, UserOfflineError } from "tiktok-live-connector";
@@ -17,15 +18,39 @@ const KULLANICI = (process.argv[2] || process.env.TIKTOK_KULLANICI || "").replac
 const OYUN_KLASORU = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../oyun");
 
 // ---------- 1) Oyunu sun (OBS tarayıcı kaynağı bu adresi açar) ----------
-const TURLER = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json" };
+const SARKI_KLASORU = path.join(OYUN_KLASORU, "sarkilar");
+fs.mkdirSync(SARKI_KLASORU, { recursive: true });
+const SES_UZANTILARI = [".mp3", ".m4a", ".ogg", ".wav"];
+const TURLER = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css", ".png": "image/png", ".svg": "image/svg+xml", ".json": "application/json",
+  ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".ogg": "audio/ogg", ".wav": "audio/wav" };
+
+function sarkiListesi() {
+  try { return fs.readdirSync(SARKI_KLASORU).filter(d => SES_UZANTILARI.includes(path.extname(d).toLowerCase())).sort((a, b) => a.localeCompare(b, "tr")); }
+  catch { return []; }
+}
+
 const sunucu = http.createServer((istek, yanit) => {
-  const yol = decodeURIComponent(new URL(istek.url, "http://x").pathname);
+  let yol;
+  try { yol = decodeURIComponent(new URL(istek.url, "http://x").pathname); } catch { yanit.writeHead(400); return yanit.end(); }
+  if (yol === "/sarkilar.json") {
+    yanit.writeHead(200, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+    return yanit.end(JSON.stringify(sarkiListesi()));
+  }
   const dosya = path.join(OYUN_KLASORU, yol === "/" ? "index.html" : yol);
-  if (!dosya.startsWith(OYUN_KLASORU)) { yanit.writeHead(403); return yanit.end(); }
-  fs.readFile(dosya, (hata, veri) => {
-    if (hata) { yanit.writeHead(404); return yanit.end("Bulunamadı"); }
-    yanit.writeHead(200, { "Content-Type": TURLER[path.extname(dosya)] || "application/octet-stream", "Cache-Control": "no-store" });
-    yanit.end(veri);
+  if (!dosya.startsWith(OYUN_KLASORU + path.sep) && dosya !== OYUN_KLASORU) { yanit.writeHead(403); return yanit.end(); }
+  fs.stat(dosya, (hata, bilgi) => {
+    if (hata || !bilgi.isFile()) { yanit.writeHead(404); return yanit.end("Bulunamadı"); }
+    const tur = TURLER[path.extname(dosya).toLowerCase()] || "application/octet-stream";
+    const aralik = /bytes=(\d*)-(\d*)/.exec(istek.headers.range || "");
+    if (aralik) {
+      // Ses dosyalarında ileri/geri sarma için kısmi gönderim
+      const bas = aralik[1] ? Number(aralik[1]) : 0;
+      const son = aralik[2] ? Math.min(Number(aralik[2]), bilgi.size - 1) : bilgi.size - 1;
+      yanit.writeHead(206, { "Content-Type": tur, "Content-Range": `bytes ${bas}-${son}/${bilgi.size}`, "Accept-Ranges": "bytes", "Content-Length": son - bas + 1 });
+      return fs.createReadStream(dosya, { start: bas, end: son }).pipe(yanit);
+    }
+    yanit.writeHead(200, { "Content-Type": tur, "Content-Length": bilgi.size, "Accept-Ranges": "bytes", "Cache-Control": "no-store" });
+    fs.createReadStream(dosya).pipe(yanit);
   });
 });
 
@@ -37,13 +62,32 @@ function yayinla(nesne) {
   for (const c of wss.clients) if (c.readyState === 1) c.send(m);
 }
 function durum(metin) { sonDurum = metin; console.log("ℹ️ ", metin); yayinla({ tip: "durum", metin }); }
-wss.on("connection", (c) => { c.send(JSON.stringify({ tip: "durum", metin: sonDurum })); });
+wss.on("connection", (c) => {
+  c.send(JSON.stringify({ tip: "durum", metin: sonDurum }));
+  // Kumanda komutlarını oyuna, oyun durumunu kumandaya aktar
+  c.on("message", (veri) => {
+    if (veri.length > 20000) return;
+    let o; try { o = JSON.parse(veri); } catch { return; }
+    if (o.tip !== "komut" && o.tip !== "oyunDurum") return;
+    const m = JSON.stringify(o);
+    for (const d of wss.clients) if (d !== c && d.readyState === 1) d.send(m);
+  });
+});
+
+function yerelAdres() {
+  for (const liste of Object.values(os.networkInterfaces())) for (const a of liste || [])
+    if (a.family === "IPv4" && !a.internal) return a.address;
+  return null;
+}
 
 sunucu.listen(PORT, () => {
   console.log("==============================================");
   console.log(" 💒 CANLI DÜĞÜN KÖPRÜSÜ");
   console.log(` Oyun (OBS):   http://localhost:${PORT}/?yayin=1`);
   console.log(` Test paneli:  http://localhost:${PORT}/`);
+  const ip = yerelAdres();
+  if (ip) console.log(` 📱 Kumanda:    http://${ip}:${PORT}/kumanda.html  (telefon aynı Wi-Fi'da olmalı)`);
+  console.log(` 📀 Şarkılar:   ${SARKI_KLASORU}  (${sarkiListesi().length} şarkı)`);
   console.log("==============================================");
 });
 

@@ -1,0 +1,11 @@
+Kendi şarkılarınızı (MP3, M4A, OGG, WAV) bu klasöre atın.
+
+- Dosya adı = şarkının adı. Örnek: "Gelin Ayşe.mp3", "Halay Havası - Grup X.mp3"
+- İzleyici "!şarkı gelin ayşe" yazınca eşleşen dosya çalar.
+  (Türkçe karakter, büyük/küçük harf farkı önemsizdir: "gelin ayse" de olur.)
+- Eşleşen dosya yoksa orgcu kendi telifsiz ezgisini çalar.
+- İstek yokken klasörden rastgele şarkı çalar (ayarlar.js → bosOldugundaMp3).
+- Yeni dosya atarsanız 20 saniye içinde oyun görür, yeniden başlatmaya gerek yok.
+
+UYARI: Telifli şarkıları canlı yayında çalmak TikTok'ta sessize alınma
+veya uyarı riskini taşır. Bu klasördeki şarkılar GitHub'a yüklenmez.
