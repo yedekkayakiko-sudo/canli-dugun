@@ -74,10 +74,20 @@ wss.on("connection", (c) => {
   });
 });
 
-function yerelAdres() {
-  for (const liste of Object.values(os.networkInterfaces())) for (const a of liste || [])
-    if (a.family === "IPv4" && !a.internal) return a.address;
-  return null;
+// Telefonun ulaşabileceği adresler: önce Wi-Fi/Ethernet, sanal bağdaştırıcılar (WSL, Hyper-V, VPN) sona
+function yerelAdresler() {
+  const sanal = /vethernet|wsl|hyper-v|virtual|vmware|vbox|docker|loopback|tailscale|zerotier|vpn/i;
+  const sonuc = [];
+  for (const [ad, liste] of Object.entries(os.networkInterfaces())) for (const a of liste || []) {
+    if (a.family !== "IPv4" || a.internal) continue;
+    let puan = 0;
+    if (/^192\.168\./.test(a.address)) puan += 3;
+    else if (/^10\./.test(a.address)) puan += 2;
+    if (/wi-?fi|wlan|kablosuz|ethernet/i.test(ad)) puan += 2;
+    if (sanal.test(ad)) puan -= 10;
+    sonuc.push({ ad, adres: a.address, puan });
+  }
+  return sonuc.sort((x, y) => y.puan - x.puan);
 }
 
 sunucu.listen(PORT, () => {
@@ -85,8 +95,11 @@ sunucu.listen(PORT, () => {
   console.log(" 💒 CANLI DÜĞÜN KÖPRÜSÜ");
   console.log(` Oyun (OBS):   http://localhost:${PORT}/?yayin=1`);
   console.log(` Test paneli:  http://localhost:${PORT}/`);
-  const ip = yerelAdres();
-  if (ip) console.log(` 📱 Kumanda:    http://${ip}:${PORT}/kumanda.html  (telefon aynı Wi-Fi'da olmalı)`);
+  const ipler = yerelAdresler();
+  if (ipler.length) {
+    console.log(` 📱 Kumanda:    http://${ipler[0].adres}:${PORT}/kumanda.html  (telefon aynı Wi-Fi'da olmalı)`);
+    for (const d of ipler.slice(1, 3)) console.log(`    açılmazsa:   http://${d.adres}:${PORT}/kumanda.html  (${d.ad})`);
+  }
   console.log(` 📀 Şarkılar:   ${SARKI_KLASORU}  (${sarkiListesi().length} şarkı)`);
   console.log("==============================================");
 });
@@ -103,6 +116,13 @@ if (!KULLANICI) {
   console.log("Kullanım: node sunucu.js <kullanici_adi>");
 } else {
   baglan();
+}
+
+function hataMetni(e) {
+  if (!e) return "bilinmeyen hata";
+  if (typeof e === "string") return e;
+  const ic = e.exception || e.error || e.cause;
+  return String(e.message || e.info || (ic && (ic.message || ic)) || JSON.stringify(e));
 }
 
 // Hediye serilerini (kombo) takip: aynı kişi + hediye için son repeatCount
@@ -150,7 +170,11 @@ function baglan() {
     try { tt.disconnect?.(); } catch {}
     setTimeout(baglan, sn * 1000);
   };
-  tt.on(ControlEvent.ERROR, (e) => console.log("⚠️ ", String(e?.message || e).slice(0, 160)));
+  tt.on(ControlEvent.ERROR, (e) => {
+    // Yayın kapalıyken gelen hatalar zaten aşağıda anlaşılır şekilde yazılıyor
+    const m = hataMetni(e);
+    if (!/room ?id|offline|not live|LIVE has ended|while connecting/i.test(m)) console.log("⚠️ ", m.slice(0, 200));
+  });
   tt.on(ControlEvent.DISCONNECTED, () => {
     durum("Bağlantı koptu, 10 sn sonra tekrar denenecek");
     tekrarDene(10);
@@ -163,8 +187,8 @@ function baglan() {
   tt.connect()
     .then((s) => durum(`@${KULLANICI} canlı yayınına BAĞLANDI ✅ (oda ${s.roomId})`))
     .catch((e) => {
-      const mesaj = String(e?.message || e);
-      if (e instanceof UserOfflineError || /offline|not live/i.test(mesaj)) durum(`@${KULLANICI} şu an canlı değil — 20 sn'de bir kontrol ediliyor`);
+      const mesaj = hataMetni(e);
+      if (e instanceof UserOfflineError || /offline|not live|room ?id/i.test(mesaj)) durum(`@${KULLANICI} şu an canlı yayında değil. Canlıya girince kendiliğinden bağlanacak (20 sn'de bir kontrol)`);
       else durum(`Bağlanamadı: ${mesaj.slice(0, 120)} — 20 sn sonra tekrar`);
       tekrarDene(20);
     });
