@@ -1,0 +1,16 @@
+{
+  "name": "canli-dugun-kopru",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TikTok canlı yayın yorum ve hediyelerini Canlı Düğün oyununa aktarır",
+  "type": "module",
+  "main": "sunucu.js",
+  "scripts": {
+    "start": "node sunucu.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "tiktok-live-connector": "2.5.0",
+    "ws": "^8.18.0"
+  }
+}

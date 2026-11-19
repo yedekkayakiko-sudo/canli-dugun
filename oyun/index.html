@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canlı Düğün</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --panel: #1e1424; --kenar: #3a2a44; --yazi: #f3e9f7; --vurgu: #ffd54a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #0c0610; color: var(--yazi); font-family: 'Baloo 2', system-ui, sans-serif; overflow: hidden; }
+  #duzen { display: flex; height: 100%; }
+  #sahne { flex: 1; display: flex; align-items: center; justify-content: center; min-width: 0; }
+  #tuval { height: 100vh; aspect-ratio: 9 / 16; max-width: 100%; object-fit: contain; display: block; cursor: pointer; }
+  body.yayin #panel { display: none; }
+  body.yayin #tuval { height: 100vh; width: 100vw; }
+
+  #panel { width: 340px; flex-shrink: 0; background: var(--panel); border-left: 1px solid var(--kenar); padding: 14px; overflow-y: auto; font-size: 14px; }
+  #panel h2 { margin: 0 0 6px; font-size: 20px; color: var(--vurgu); }
+  #panel h3 { margin: 14px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: #ce93d8; }
+  .satir { display: flex; gap: 6px; flex-wrap: wrap; }
+  button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 7px 10px; background: #3a2a44; color: #fff; cursor: pointer; }
+  button:hover { background: #4d3859; }
+  button.ana { background: #c2185b; } button.ana:hover { background: #d81b60; }
+  button.altin { background: #8d6e00; }
+  input, select { font: inherit; width: 100%; padding: 7px 9px; border-radius: 10px; border: 1px solid var(--kenar); background: #120c16; color: #fff; }
+  .durum { padding: 8px 10px; border-radius: 10px; background: #120c16; margin: 8px 0; font-size: 13px; }
+  .durum b.acik { color: #69f0ae; } .durum b.kapali { color: #ff8a80; }
+  .kucuk { font-size: 12px; opacity: .75; line-height: 1.4; }
+  label { display: block; margin: 6px 0 3px; font-size: 12px; opacity: .8; }
+  @media (max-width: 760px) { #duzen { flex-direction: column; } #panel { width: 100%; height: 45%; border-left: 0; border-top: 1px solid var(--kenar); } #tuval { height: 55vh; } }
+</style>
+</head>
+<body>
+<div id="duzen">
+  <div id="sahne"><canvas id="tuval" title="Sesi başlatmak için tıkla"></canvas></div>
+
+  <aside id="panel">
+    <h2>🧪 Test Paneli</h2>
+    <div class="kucuk">Yayında gizlemek için adrese <b>?yayin=1</b> ekleyin.</div>
+    <div class="durum">Köprü: <b id="koprüDurum" class="kapali">bağlı değil</b><br>Ses: <b id="sesDurum" class="kapali">kapalı</b></div>
+    <div class="satir">
+      <button class="ana" id="sesBtn">🔊 Sesi Başlat</button>
+      <button id="demoBtn">🤖 Otomatik Demo: KAPALI</button>
+    </div>
+
+    <h3>İzleyici</h3>
+    <label>Kullanıcı adı</label>
+    <div class="satir" style="flex-wrap:nowrap"><input id="kullanici"><button id="rastgeleBtn" title="Rastgele izleyici">🎲</button></div>
+
+    <h3>Yorumlar</h3>
+    <div class="satir">
+      <button data-yorum="Maşallah çok güzel!">💬 Yorum</button>
+      <button data-yorum="bekar">💘 bekar</button>
+      <button data-yorum="bekar kız">💘 bekar kız</button>
+      <button data-yorum="bekar erkek">💘 bekar erkek</button>
+      <button data-yorum="!şarkı Halay Havası">🎵 !şarkı</button>
+    </div>
+    <label>Serbest yorum</label>
+    <div class="satir" style="flex-wrap:nowrap"><input id="serbest" placeholder="ör: !şarkı Gelin Ayşe"><button id="gonderBtn">Gönder</button></div>
+
+    <h3>Hediyeler</h3>
+    <div class="satir" id="hediyeler"></div>
+    <label>Adet (kombo)</label>
+    <select id="adet"><option>1</option><option>5</option><option>10</option><option>50</option></select>
+
+    <h3>Diğer</h3>
+    <div class="satir">
+      <button id="begeniBtn">❤️ 15 Beğeni</button>
+      <button id="takipBtn">➕ Takip</button>
+      <button id="paylasBtn">📣 Paylaş</button>
+      <button id="girisBtn">👋 Giriş</button>
+    </div>
+    <div class="satir" style="margin-top:6px">
+      <button id="kalabalikBtn">👥 12 kişi gelsin</button>
+      <button id="ciftBtn">💑 Çift eşleştir</button>
+    </div>
+
+    <h3>Yayıncı</h3>
+    <div class="satir">
+      <button id="turBtn">⏭ Düğünü bitir</button>
+      <button id="sarkiBtn">⏭ Şarkıyı atla</button>
+    </div>
+    <p class="kucuk">Tüm müzik tarayıcıda üretilir, kayıt çalınmaz. Ses OBS / TikTok LIVE Studio'da bu pencereden alınır.</p>
+  </aside>
+</div>
+
+<script src="ayarlar.js"></script>
+<script src="muzik.js"></script>
+<script src="oyun.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  if (q.get("yayin") === "1") document.body.classList.add("yayin");
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- Ses ----------
+  function sesBaslat() {
+    Muzik.baslat();
+    setTimeout(() => {
+      const acik = Muzik.aktifMi();
+      $("sesDurum").textContent = acik ? "açık" : "kapalı (bir yere tıklayın)";
+      $("sesDurum").className = acik ? "acik" : "kapali";
+    }, 150);
+  }
+  $("sesBtn").onclick = sesBaslat;
+  document.addEventListener("pointerdown", sesBaslat, { once: true });
+  sesBaslat(); // OBS'de otomatik çalar; normal tarayıcıda ilk tıklamada açılır
+
+  // ---------- Köprü (WebSocket) ----------
+  const adres = q.get("ws") || AYAR.koprüAdresi;
+  let ws, bekle = 1000;
+  function baglan() {
+    try { ws = new WebSocket(adres); } catch (e) { return setTimeout(baglan, bekle); }
+    ws.onopen = () => { bekle = 1000; $("koprüDurum").textContent = "bağlı"; $("koprüDurum").className = "acik"; };
+    ws.onmessage = (m) => { try { const o = JSON.parse(m.data); if (o.tip === "durum") { $("koprüDurum").textContent = o.metin; return; } Oyun.olay(o); } catch (e) {} };
+    ws.onclose = () => { $("koprüDurum").textContent = "bağlı değil"; $("koprüDurum").className = "kapali"; setTimeout(baglan, bekle); bekle = Math.min(bekle * 2, 10000); };
+  }
+  baglan();
+
+  // ---------- Test paneli ----------
+  const ADLAR = ["ayse_34", "mehmet.dgn", "zeynep_k", "ahmet_yildiz", "elif.ozz", "burak_06", "selin.akk", "emre35",
+    "merve__b", "can.krk", "fatma.tt", "oguz_h", "deniz.ege", "kerem07", "esra_nur", "yusuf.tr", "buse.ylmz", "hakan_61",
+    "ece.sn", "murat_27", "gizem.cc", "serkan.01", "irem_ss", "tolga.mrt"];
+  const rastgeleAd = () => ADLAR[Math.floor(Math.random() * ADLAR.length)] + (Math.random() < 0.3 ? Math.floor(Math.random() * 90 + 10) : "");
+  $("kullanici").value = rastgeleAd();
+  $("rastgeleBtn").onclick = () => { $("kullanici").value = rastgeleAd(); };
+  const kim = (ad) => { ad = ad || $("kullanici").value.trim() || rastgeleAd(); return { id: ad, ad }; };
+
+  document.querySelectorAll("[data-yorum]").forEach(b => b.onclick = () => Oyun.olay({ tip: "yorum", ...kim(), metin: b.dataset.yorum }));
+  $("gonderBtn").onclick = () => { const m = $("serbest").value.trim(); if (m) Oyun.olay({ tip: "yorum", ...kim(), metin: m }); };
+  $("serbest").onkeydown = (e) => { if (e.key === "Enter") $("gonderBtn").click(); };
+
+  AYAR.testHediyeleri.forEach(h => {
+    const b = document.createElement("button");
+    b.className = h.coin >= 500 ? "ana" : h.coin >= 10 ? "altin" : "";
+    b.textContent = `${h.emoji} ${h.ad} (${h.coin})`;
+    b.onclick = () => Oyun.olay({ tip: "hediye", ...kim(), hediye: h.ad, coin: h.coin, adet: Number($("adet").value) });
+    $("hediyeler").appendChild(b);
+  });
+
+  $("begeniBtn").onclick = () => Oyun.olay({ tip: "begeni", ...kim(), adet: 15 });
+  $("takipBtn").onclick = () => Oyun.olay({ tip: "takip", ...kim() });
+  $("paylasBtn").onclick = () => Oyun.olay({ tip: "paylasim", ...kim() });
+  $("girisBtn").onclick = () => Oyun.olay({ tip: "giris", ...kim() });
+  $("turBtn").onclick = () => Oyun.turuBitir();
+  $("sarkiBtn").onclick = () => Oyun.sarkiAtla();
+  $("kalabalikBtn").onclick = () => {
+    const yorumlar = ["Maşallah 🧿", "Halay başı benim!", "Oley oley", "Gelin çok güzel 😍", "Davul zurna nerde", "Mutluluklar!", "Selam herkese", "Kalkın oynayın!"];
+    for (let i = 0; i < 12; i++) setTimeout(() => Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: yorumlar[i % yorumlar.length] }), i * 120);
+  };
+  $("ciftBtn").onclick = () => {
+    Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: "bekar kız" });
+    setTimeout(() => Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: "bekar erkek" }), 400);
+  };
+
+  // ---------- Otomatik demo ----------
+  let demo = null;
+  $("demoBtn").onclick = () => {
+    if (demo) { clearInterval(demo); demo = null; $("demoBtn").textContent = "🤖 Otomatik Demo: KAPALI"; return; }
+    $("demoBtn").textContent = "🤖 Otomatik Demo: AÇIK";
+    demo = setInterval(() => {
+      const r = Math.random(), k = kim(rastgeleAd());
+      if (r < 0.45) Oyun.olay({ tip: "yorum", ...k, metin: ["Maşallah", "oley", "halay!", "çok güzel", "selam", "😍😍"][Math.floor(Math.random() * 6)] });
+      else if (r < 0.55) Oyun.olay({ tip: "yorum", ...k, metin: Math.random() < 0.5 ? "bekar kız" : "bekar erkek" });
+      else if (r < 0.6) Oyun.olay({ tip: "yorum", ...k, metin: "!şarkı " + ["Gelin Havası", "Damat Halayı", "Roman Oyunu", "Kına Gecesi"][Math.floor(Math.random() * 4)] });
+      else if (r < 0.8) Oyun.olay({ tip: "begeni", ...k, adet: 10 });
+      else if (r < 0.93) Oyun.olay({ tip: "hediye", ...k, hediye: "Rose", coin: 1, adet: 1 + Math.floor(Math.random() * 8) });
+      else if (r < 0.985) Oyun.olay({ tip: "hediye", ...k, hediye: "Sunglasses", coin: 199, adet: 1 });
+      else Oyun.olay({ tip: "hediye", ...k, hediye: Math.random() < 0.7 ? "Cake" : "Lion", coin: Math.random() < 0.7 ? 1000 : 29999, adet: 1 });
+    }, 700);
+  };
+})();
+</script>
+</body>
+</html>
