@@ -88,6 +88,15 @@ Yeni dosya atarsanız oyun 20 saniye içinde görür, yeniden başlatmanız gere
 
 > Telefon bağlanamıyorsa: Windows ilk açılışta Node.js için güvenlik duvarı sorabilir, **Özel ağlar**a izin verin.
 
+## 🎬 Tanıtım videosu (takipçi toplamak için)
+
+Test panelindeki **🎬 Tanıtım videosu çek** butonuna basın ya da doğrudan `http://localhost:8080/?video=1` adresini açın. **🔴 Kaydı Başlat** deyince oyun kendi kendine 40 saniyelik bir düğün oynar: halay, kısmet eşleşmesi, takı, pasta, davul-zurna ve en sonda "@hesabınız TAKİP ET" kartı. Video bitince İndirilenler klasörüne kaydedilir (1080×1920, sesli).
+
+- Her video farklı isim ve yorumlarla oynar. Birkaç tane çekip farklı günlerde paylaşabilirsiniz.
+- Videoda klasördeki MP3'ler çalmaz, sadece telifsiz orgcu müziği kullanılır.
+- Kayıt sırasında sekmeyi açık bırakın, başka sekmeye geçmeyin.
+- Ekrandaki hesap adı `ayarlar.js` → `hesapAdi` ayarından gelir.
+
 ## ⚙️ Ayarlar (`oyun/ayarlar.js`)
 
 - `turSuresi`: Bir düğünün süresi (varsayılan 6 dakika)

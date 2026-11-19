@@ -311,7 +311,7 @@
   // İzleyicinin yazdığını klasördeki dosya adlarıyla karşılaştır (Türkçe karakter / yazım farkına dayanıklı)
   function eslestir(istek) {
     const q = norm(istek);
-    if (q.length < 2 || !S.mp3Listesi.length) return null;
+    if (A.videoModu || q.length < 2 || !S.mp3Listesi.length) return null;   // videoda telifli şarkı olmasın
     const kel = q.split(" ").filter(w => w.length >= 2);
     let en = null, enPuan = 0;
     for (const d of S.mp3Listesi) {
@@ -323,7 +323,7 @@
   }
 
   function listeYukle() {
-    if (!/^https?:/.test(location.protocol)) return;   // dosyadan açıldıysa liste yok
+    if (!/^https?:/.test(location.protocol) || A.videoModu) return;   // dosyadan açıldıysa / video modunda liste yok
     fetch("sarkilar.json", { cache: "no-store" }).then(r => r.ok ? r.json() : []).then(l => {
       if (!Array.isArray(l)) return;
       const ilk = !S.mp3Listesi.length && l.length;
@@ -335,7 +335,7 @@
 
   function sarkiDegistir(secim) {
     const sira = secim || S.istekler.shift();
-    const mp3Olur = window.Muzik && simdi() - S.mp3Hata > 15;
+    const mp3Olur = window.Muzik && !A.videoModu && simdi() - S.mp3Hata > 15;
     let ad, kimden = null, dosya = null;
     if (sira) {
       kimden = sira.kimden || null;
@@ -452,7 +452,7 @@
       for (let i = 0; i < Math.min(adet, 3); i++) S.sovlar.push({ tip: "pasta", kisi: k.id, sure: 8 });
     } else if (tur === "efsane") {
       altinFirlat(k, takiAdi(coin), 0);
-      S.sovlar.push({ tip: "efsane", kisi: k.id, sure: 16, coin: toplam });
+      S.sovlar.push({ tip: "efsane", kisi: k.id, sure: A.videoModu ? 10 : 16, coin: toplam });
     }
 
     // Takı hedefi
@@ -691,7 +691,7 @@
     panel(30, 150, W - 60, 112, "rgba(120,15,60,0.85)", "#ffd54a");
     const kalan = Math.max(0, S.turBitis - t);
     const dk = Math.floor(kalan / 60), sn = Math.floor(kalan % 60);
-    yazi(`💒 CANLI DÜĞÜN #${S.turNo}`, 60, 180, 30, "#ffd54a", "left", 800, 5);
+    yazi(A.videoModu && A.hesapAdi ? `🔴 CANLI • @${A.hesapAdi}` : `💒 CANLI DÜĞÜN #${S.turNo}`, 60, 180, 30, "#ffd54a", "left", 800, 5);
     yazi(isFinite(kalan) ? `⏱ ${dk}:${String(sn).padStart(2, "0")}` : "⏱ —", W - 60, 180, 30, kalan < 30 ? "#ff5252" : "#fff", "right", 800, 5);
     const i = Math.floor(t / 3.6) % IPUCLARI.length;
     const faz = (t / 3.6) % 1;
@@ -1139,6 +1139,25 @@
     sovCiz(t, nabiz);
     parcaciklarCiz();
     yazilarCiz();
+    if (S.sonKart) sonKartCiz(t);
+  }
+
+  // Video sonu: takip çağrısı
+  function sonKartCiz(t) {
+    const g = t - S.sonKart;
+    c.globalAlpha = Math.min(1, g / 0.5);
+    c.fillStyle = "rgba(20,0,25,0.93)"; c.fillRect(0, 0, W, H);
+    yazi("💒 HER AKŞAM", 540, 520, 72, "#ffd54a", "center", 800, 9);
+    yazi("CANLI DÜĞÜN!", 540, 620, 104, "#fff", "center", 800, 11);
+    [["💬", "Yorum yaz → halaya katıl"], ["💘", "\"bekar\" yaz → kısmetini bul"], ["💍", "Hediye at → geline altın tak"], ["👑", "Aslan at → DÜĞÜN SAHİBİ ol"]]
+      .forEach(([e, m], i) => yazi(`${e} ${m}`, 540, 800 + i * 90, 50, "#f8bbd0", "center", 800, 7, W - 80));
+    const p = 1 + Math.sin(g * 6) * 0.04;
+    c.save(); c.translate(540, 1270); c.scale(p, p);
+    yuvarlak(-420, -75, 840, 150, 75); c.fillStyle = "#ff1744"; c.fill();
+    yazi(`👉 @${A.hesapAdi || "hesabım"} TAKİP ET`, 0, 4, 60, "#fff", "center", 800, 0, 780);
+    c.restore();
+    yazi("Canlıda görüşürüz! 🎉", 540, 1430, 46, "#fff", "center", 800, 7);
+    c.globalAlpha = 1;
   }
 
   function dongu() {
@@ -1157,6 +1176,7 @@
     turuBitir: () => { S.turBitis = 0; },
     sarkiAtla: () => sarkiDegistir(),
     komut, durumOzeti, eslestir,
+    sonKart: () => { S.sonKart = simdi(); },
     sifirla: () => location.reload(),
   };
 })();

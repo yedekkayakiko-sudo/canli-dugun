@@ -29,10 +29,23 @@
   .durum b.acik { color: #69f0ae; } .durum b.kapali { color: #ff8a80; }
   .kucuk { font-size: 12px; opacity: .75; line-height: 1.4; }
   label { display: block; margin: 6px 0 3px; font-size: 12px; opacity: .8; }
+  #videoKutu { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10,4,14,.82); z-index: 5; padding: 16px; }
+  body.video #videoKutu { display: flex; }
+  #videoKutu .kart { max-width: 460px; background: var(--panel); border: 1px solid var(--kenar); border-radius: 20px; padding: 22px; text-align: center; }
+  #videoKutu h2 { margin: 0 0 8px; color: var(--vurgu); font-size: 26px; }
+  #videoKutu p { margin: 6px 0; line-height: 1.45; }
+  #videoKutu button { font-size: 22px; padding: 14px 22px; margin-top: 12px; }
+  body.kayitta { cursor: none; }
   @media (max-width: 760px) { #duzen { flex-direction: column; } #panel { width: 100%; height: 45%; border-left: 0; border-top: 1px solid var(--kenar); } #tuval { height: 55vh; } }
 </style>
 </head>
 <body>
+<div id="videoKutu"><div class="kart" id="videoKart">
+  <h2>🎬 Tanıtım Videosu</h2>
+  <p>Butona basınca oyun kendi kendine <b>40 saniyelik</b> bir düğün oynar ve kaydeder. Halay, kısmet eşleşmesi, takı, pasta ve davul-zurna sırayla gelir.</p>
+  <p class="kucuk">Kayıt bitene kadar bu sekmeyi açık bırakın, başka sekmeye geçmeyin. Bitince video kendiliğinden indirilir.</p>
+  <button class="ana" id="videoBasla">🔴 Kaydı Başlat</button>
+</div></div>
 <div id="duzen">
   <div id="sahne"><canvas id="tuval" title="Sesi başlatmak için tıkla"></canvas></div>
 
@@ -43,6 +56,7 @@
     <div class="satir">
       <button class="ana" id="sesBtn">🔊 Sesi Başlat</button>
       <button id="demoBtn">🤖 Otomatik Demo: KAPALI</button>
+      <button onclick="location.href='?video=1'">🎬 Tanıtım videosu çek</button>
     </div>
 
     <h3>İzleyici</h3>
@@ -190,6 +204,73 @@
     Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: "bekar kız" });
     setTimeout(() => Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: "bekar erkek" }), 400);
   };
+
+  // ---------- Tanıtım videosu (?video=1) ----------
+  if (q.get("video") === "1") {
+    document.body.classList.add("yayin", "video");
+    AYAR.videoModu = true;            // telifli MP3 çalmaz, ekranda @hesap görünür
+    Oyun.durum.takiHedef = 3000;      // hedef çubuğu video boyunca dolsun
+    $("videoBasla").onclick = videoCek;
+  }
+
+  function videoCek() {
+    sesBaslat();
+    Muzik.mp3Durdur(); Oyun.sarkiAtla();
+    const tuval = $("tuval");
+    const akis = new MediaStream([...tuval.captureStream(30).getVideoTracks(), ...Muzik.kayitAkisi().getAudioTracks()]);
+    const turler = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1.42E01E,opus", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+    const tur = turler.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+    if (!tur) { alert("Bu tarayıcı video kaydını desteklemiyor. Google Chrome kullanın."); return; }
+    const kayit = new MediaRecorder(akis, { mimeType: tur, videoBitsPerSecond: 8000000 });
+    const parcalar = [];
+    kayit.ondataavailable = (e) => { if (e.data.size) parcalar.push(e.data); };
+    kayit.onstop = () => {
+      document.body.classList.remove("kayitta");
+      const uzanti = tur.includes("mp4") ? "mp4" : "webm";
+      const blob = new Blob(parcalar, { type: tur.split(";")[0] });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `canli-dugun-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${uzanti}`;
+      document.body.appendChild(a); a.click();
+      $("videoKart").innerHTML = `<h2>✅ Video indirildi!</h2><p>İndirilenler klasörüne <b>.${uzanti}</b> dosyası olarak kaydedildi.</p>
+        <p>Her video farklı isim ve yorumlarla oynar. Yenisi için:</p><button class="ana" onclick="location.reload()">🔁 Yeni video çek</button>`;
+      $("videoKutu").style.display = "flex";
+    };
+    $("videoKutu").style.display = "none";
+    document.body.classList.add("kayitta");
+    kayit.start(1000);
+    senaryo(() => kayit.stop());
+  }
+
+  function senaryo(bitti) {
+    const adlar = ADLAR.slice().sort(() => Math.random() - 0.5);
+    let i = 0;
+    const kisi = () => { const ad = adlar[i++ % adlar.length] + (i > adlar.length ? i : ""); return { id: ad, ad }; };
+    const sec = (l) => l[Math.floor(Math.random() * l.length)];
+    const YORUM = ["Maşallah 🧿", "Oley oley 💃", "Halay başı benim!", "Gelin çok güzel 😍", "Davul zurna nerde?", "Mutluluklar!", "Kalkın oynayın!", "Selam düğün evi 👋", "Çok eğlenceli 😂", "Ben de geldim!"];
+    const SARKI = ["Gelin Alma Havası", "Damat Halayı", "Kına Gecesi", "Roman Havası"];
+    const olay = (o) => Oyun.olay(o);
+    const zaman = [];
+    const at = (ms, fn) => zaman.push(setTimeout(fn, ms));
+    for (let j = 0; j < 14; j++) at(j * 170, () => olay({ tip: "yorum", ...kisi(), metin: sec(YORUM) }));
+    [2600, 2900, 3200].forEach(ms => at(ms, () => olay({ tip: "begeni", ...kisi(), adet: 90 })));
+    const gelin = kisi(), damat = kisi();
+    at(3500, () => olay({ tip: "yorum", ...gelin, metin: "bekar kız" }));
+    at(4300, () => olay({ tip: "yorum", ...damat, metin: "bekar erkek" }));
+    const gul = kisi(), gul2 = kisi();
+    at(9000, () => olay({ tip: "hediye", ...gul, hediye: "Rose", coin: 1, adet: 15 }));
+    at(9600, () => olay({ tip: "hediye", ...gul2, hediye: "Rose", coin: 1, adet: 8 }));
+    at(10500, () => olay({ tip: "hediye", ...kisi(), hediye: "Sunglasses", coin: 199, adet: 1 }));
+    at(11500, () => olay({ tip: "hediye", ...kisi(), hediye: "Sunglasses", coin: 199, adet: 2 }));
+    at(12500, () => olay({ tip: "hediye", ...kisi(), hediye: "Hand Hearts", coin: 100, adet: 1 }));
+    at(13500, () => olay({ tip: "yorum", ...kisi(), metin: "!şarkı " + sec(SARKI) }));
+    at(15000, () => olay({ tip: "hediye", ...kisi(), hediye: "Evil Eye", coin: 5, adet: 3 }));
+    for (let j = 0; j < 4; j++) at(16000 + j * 400, () => olay({ tip: "yorum", ...kisi(), metin: sec(YORUM) }));
+    at(18000, () => olay({ tip: "hediye", ...kisi(), hediye: "Cake", coin: 1000, adet: 1 }));
+    at(26500, () => olay({ tip: "hediye", ...kisi(), hediye: "Lion", coin: 29999, adet: 1 }));
+    at(37000, () => Oyun.sonKart());
+    at(41500, bitti);
+  }
 
   // ---------- Otomatik demo ----------
   let demo = null;

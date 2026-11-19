@@ -6,7 +6,7 @@
 // ============================================================
 (function () {
   const M = {};
-  let ctx = null, ana, muzikGain, efektGain, gurultu;
+  let ctx = null, ana, muzikGain, efektGain, gurultu, kompRef;
   let calisiyor = false, zamanlayici = null;
   let sonrakiZaman = 0, adim = 0, olcu = 0;
   let tarz = null, ezgi = [], bas = [];
@@ -202,7 +202,7 @@
   M.baslat = function () {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const komp = ctx.createDynamicsCompressor();
+      const komp = kompRef = ctx.createDynamicsCompressor();
       ana = ctx.createGain(); ana.gain.value = 1;
       muzikGain = ctx.createGain(); muzikGain.gain.value = (window.AYAR?.muzikSes ?? 0.5);
       efektGain = ctx.createGain(); efektGain.gain.value = (window.AYAR?.efektSes ?? 0.7);
@@ -218,6 +218,9 @@
     }
     return ctx.state;
   };
+
+  // Video kaydı için oyunun tüm sesini (müzik + efekt) akış olarak ver
+  M.kayitAkisi = function () { M.baslat(); const d = ctx.createMediaStreamDestination(); kompRef.connect(d); return d.stream; };
 
   M.durdur = function () { calisiyor = false; clearInterval(zamanlayici); };
   M.aktifMi = () => !!ctx && calisiyor && ctx.state === "running";

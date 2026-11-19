@@ -6,6 +6,9 @@ window.AYAR = {
   // Köprü programının adresi (kopru/sunucu.js). Değiştirmeniz gerekmez.
   koprüAdresi: "ws://localhost:8080",
 
+  // TikTok kullanıcı adınız (video modunda ekranda görünür)
+  hesapAdi: "dnmzvar",
+
   // Bir düğünün (turun) süresi, saniye. Tur bitince sıradaki çift gelin-damat olur.
   turSuresi: 6 * 60,
 
