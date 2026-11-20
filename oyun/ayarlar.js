@@ -9,18 +9,22 @@ window.AYAR = {
   // TikTok kullanıcı adınız (video modunda ekranda görünür)
   hesapAdi: "dnmzvar",
 
-  // Bir düğünün (turun) süresi, saniye. Tur bitince sıradaki çift gelin-damat olur.
-  turSuresi: 6 * 60,
+  // Düğün aşamalarının süreleri (saniye). Bir düğün ≈ 7 dakika.
+  //  kapi: kapı tutma, nikah: "EVET" bekleme, ayakOy: ayak basma oylaması,
+  //  halay, taki: takı merasimi, pastaOy: "bulaştır" oylaması, cicekOy: gelin çiçeği,
+  //  final: konvoy + özet, duello: dans düellosu oylaması, kopma: kopma anı
+  fazSureleri: { kapi: 70, nikah: 50, ayakOy: 14, halay: 110, taki: 90, pastaOy: 22, cicekOy: 14, final: 14, duello: 16, kopma: 10 },
 
-  // Halayda aynı anda görünen en fazla kişi
-  halayKapasite: 22,
+  // Kapıyı açmak için en az kaç puan (beğeni=1, yorum=3, hediye coin x5)
+  kapiEnAz: 120,
 
-  // Takı hedefi: bu kadar coin toplanınca GELİN-DAMAT ÖZEL DANSI başlar.
-  // Her dolduğunda hedef bu oranda büyür.
+  // Pistte aynı anda görünen en fazla kişi
+  halayKapasite: 24,
+
+  // Takı hedefi: bu kadar coin takılınca gelin-damat altının ağırlığından eğilir 😂
   takiHedefi: 300,
-  takiHedefiCarpan: 1.5,
 
-  // Beğeniler halayı hızlandırır: kaç beğenide tam coşku
+  // Kaç beğenide KOPMA ANI (herkes çıldırır) başlar
   coskuIcinBegeni: 300,
 
   // Müzik ses seviyesi (0-1)
@@ -44,9 +48,9 @@ window.AYAR = {
   //  HEDİYE KADEMELERİ — hediyenin TEK adet coin değerine göre
   //  (TikTok'tan gelen değer otomatik okunur, elle girmeye gerek yok)
   // ----------------------------------------------------------
-  //  mini   : halaya katıl, en öne geç, kombo sayacı
-  //  taki   : geline/damada altın takılır + sunucu anonsu
-  //  pasta  : dev pasta kesimi + havai fişek (ekranı alır)
+  //  mini   : karakterin çıldırır, çifte gül atar, kombo sayacı
+  //  taki   : geline/damada altın takılır, kaynana yorum yapar
+  //  pasta  : KOMİK SAHNE (damadı havaya atma, kucak, tango, kaynana, serenat)
   //  efsane : DAVUL-ZURNA tam ekran şov + "DÜĞÜN SAHİBİ" tacı
   kademeler: [
     { tur: "mini",   enAz: 1    },
@@ -83,7 +87,7 @@ window.AYAR = {
     { ad: "Evil Eye",   coin: 5,     emoji: "🧿" },
     { ad: "Sunglasses", coin: 199,   emoji: "🕶️" },
     { ad: "Hand Hearts",coin: 100,   emoji: "🫶" },
-    { ad: "Cake",       coin: 1000,  emoji: "🎂" },
+    { ad: "Cake",       coin: 1000,  emoji: "🎬" },
     { ad: "Lion",       coin: 29999, emoji: "🦁" },
   ],
 };

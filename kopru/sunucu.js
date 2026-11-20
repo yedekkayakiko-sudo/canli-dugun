@@ -1,6 +1,7 @@
 // ============================================================
 //  CANLI DÜĞÜN — TİKTOK KÖPRÜSÜ
-//  Kullanım:  node sunucu.js <tiktok_kullanici_adi>
+//  Kullanım:  node sunucu.js            (ilk açılışta kullanıcı adını sorar ve hatırlar)
+//             node sunucu.js yeniad     (kullanıcı adını değiştirir)
 //  - TikTok canlı yayınındaki yorum/hediye/beğeni/takip olaylarını okur
 //  - Oyunu http://localhost:8080 adresinde sunar
 //  - Olayları WebSocket ile oyuna gönderir
@@ -10,12 +11,22 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
+import readline from "node:readline";
+import { exec } from "node:child_process";
 import { WebSocketServer } from "ws";
 import { TikTokLiveConnection, WebcastEvent, ControlEvent, UserOfflineError } from "tiktok-live-connector";
 
 const PORT = Number(process.env.PORT || 8080);
-const KULLANICI = (process.argv[2] || process.env.TIKTOK_KULLANICI || "").replace(/^@/, "").trim();
-const OYUN_KLASORU = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../oyun");
+const KOPRU_KLASORU = path.dirname(fileURLToPath(import.meta.url));
+const OYUN_KLASORU = path.resolve(KOPRU_KLASORU, "../oyun");
+
+// Kullanıcı adı: komut satırı > ortam değişkeni > kayıtlı ayar (kopru/ayar.json)
+const AYAR_DOSYASI = path.join(KOPRU_KLASORU, "ayar.json");
+function ayarOku() { try { return JSON.parse(fs.readFileSync(AYAR_DOSYASI, "utf8")); } catch { return {}; } }
+function ayarYaz(o) { try { fs.writeFileSync(AYAR_DOSYASI, JSON.stringify(o, null, 2)); } catch {} }
+const temizAd = (s) => String(s || "").replace(/^@/, "").replace(/^https?:\/\/(www\.)?tiktok\.com\/@?/i, "").replace(/\/.*$/, "").trim();
+let KULLANICI = temizAd(process.argv[2] || process.env.TIKTOK_KULLANICI || ayarOku().kullanici);
+if (process.argv[2] && KULLANICI) ayarYaz({ ...ayarOku(), kullanici: KULLANICI });
 
 // ---------- 1) Oyunu sun (OBS tarayıcı kaynağı bu adresi açar) ----------
 const SARKI_KLASORU = path.join(OYUN_KLASORU, "sarkilar");
@@ -90,7 +101,7 @@ function yerelAdresler() {
   return sonuc.sort((x, y) => y.puan - x.puan);
 }
 
-sunucu.listen(PORT, () => {
+function dinle(bitince) { sunucu.listen(PORT, () => {
   console.log("==============================================");
   console.log(" 💒 CANLI DÜĞÜN KÖPRÜSÜ");
   console.log(` Oyun (OBS):   http://localhost:${PORT}/?yayin=1`);
@@ -101,8 +112,26 @@ sunucu.listen(PORT, () => {
     for (const d of ipler.slice(1, 3)) console.log(`    açılmazsa:   http://${d.adres}:${PORT}/kumanda.html  (${d.ad})`);
   }
   console.log(` 📀 Şarkılar:   ${SARKI_KLASORU}  (${sarkiListesi().length} şarkı)`);
+  console.log(` 👤 Hesap:      ${KULLANICI ? "@" + KULLANICI + "   (değiştirmek için: node sunucu.js yeniad)" : "yok — sadece test"}`);
   console.log("==============================================");
+  bitince && bitince();
+}); }
+wss.on("error", () => {});   // aynı hata aşağıda anlaşılır şekilde yazılır
+sunucu.on("error", (e) => {
+  if (e.code === "EADDRINUSE") { console.log(`\n❌ ${PORT} portu kullanımda: köprü zaten açık olabilir. Diğer siyah pencereyi kapatıp tekrar deneyin.\n`); process.exit(1); }
+  throw e;
 });
+
+function tarayiciAc() {
+  if (process.env.TARAYICI === "0") return;
+  const adres = `http://localhost:${PORT}/`;
+  const komut = process.platform === "win32" ? `start "" "${adres}"` : process.platform === "darwin" ? `open "${adres}"` : null;
+  if (komut) exec(komut, () => {});
+}
+
+function sor(soru) {
+  return new Promise((r) => { const rl = readline.createInterface({ input: process.stdin, output: process.stdout }); rl.question(soru, (cvp) => { rl.close(); r(cvp); }); });
+}
 
 // ---------- 3) TikTok bağlantısı ----------
 const kisi = (u = {}) => ({
@@ -111,12 +140,15 @@ const kisi = (u = {}) => ({
   foto: u.profilePicture?.urls?.[0] || u.profilePictureUrl || null,
 });
 
-if (!KULLANICI) {
-  durum("TikTok kullanıcı adı verilmedi — sadece test paneli çalışır");
-  console.log("Kullanım: node sunucu.js <kullanici_adi>");
-} else {
-  baglan();
-}
+(async () => {
+  if (!KULLANICI && process.stdin.isTTY) {
+    KULLANICI = temizAd(await sor("👤 TikTok kullanıcı adınız (@ olmadan, boş bırakırsanız sadece test): "));
+    if (KULLANICI) { ayarYaz({ ...ayarOku(), kullanici: KULLANICI }); console.log("✅ Kaydedildi, bir dahaki sefere sormayacağım.\n"); }
+  }
+  dinle(tarayiciAc);
+  if (!KULLANICI) durum("TikTok kullanıcı adı yok — sadece test paneli çalışır");
+  else baglan();
+})();
 
 function hataMetni(e) {
   if (!e) return "bilinmeyen hata";

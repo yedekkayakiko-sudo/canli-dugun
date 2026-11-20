@@ -42,10 +42,11 @@
 
   <div class="izgara" style="margin-bottom:14px">
     <button class="buyuk acik-m" id="muzik">🔊 Müzik AÇIK</button>
-    <button id="sonraki">⏭ Sonraki</button>
-    <button id="turBitir">⏹ Düğünü bitir</button>
+    <button id="sonraki">⏭ Sonraki şarkı</button>
+    <button id="sonrakiFaz">⏩ Sonraki aşama</button>
     <button id="sesEksi">🔉 Ses −</button>
     <button id="sesArti">🔊 Ses + <span id="ses"></span></button>
+    <button id="turBitir" style="grid-column:1/-1;background:#5d2a35">⏹ Düğünü bitir (konvoya geç)</button>
   </div>
 
   <div class="kart">
@@ -76,7 +77,7 @@
   function ciz(d) {
     son = d;
     $("baglanti").textContent = "oyun bağlı ✅";
-    $("tur").textContent = `• Düğün #${d.turNo}${d.kalan != null ? ` • ${Math.floor(d.kalan / 60)}:${String(d.kalan % 60).padStart(2, "0")}` : ""} • halayda ${d.halay} kişi`;
+    $("tur").textContent = `• Düğün #${d.turNo} • ${d.faz || ""}${d.kalan != null ? ` (${d.kalan} sn)` : ""} • pistte ${d.halay} kişi`;
     $("calan").textContent = (d.calan.mp3 ? "📀 " : "🎹 ") + d.calan.sarki;
     $("calanAlt").textContent = d.calan.kimden ? `istek: @${d.calan.kimden}` : (d.calan.mp3 ? "çalma listesi" : "orgcu (telifsiz)");
     $("muzik").textContent = d.muzikAcik ? "🔊 Müzik AÇIK — kapatmak için dokun" : "🔇 Müzik KAPALI — açmak için dokun";
@@ -117,6 +118,7 @@
 
   $("muzik").onclick = () => gonder({ komut: "muzik" });
   $("sonraki").onclick = () => gonder({ komut: "sonraki" });
+  $("sonrakiFaz").onclick = () => gonder({ komut: "sonrakiFaz" });
   $("turBitir").onclick = () => { if (confirm("Bu düğün bitirilsin mi?")) gonder({ komut: "turBitir" }); };
   $("sesArti").onclick = () => gonder({ komut: "sesArti" });
   $("sesEksi").onclick = () => gonder({ komut: "sesEksi" });

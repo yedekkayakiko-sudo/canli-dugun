@@ -7,20 +7,28 @@ canli-dugun/
 ├── oyun/            → Oyun (OBS'de açılan sayfa)
 │   ├── index.html   → Sahne + sağda Test Paneli
 │   ├── ayarlar.js   → ⚙️ Hediye kademeleri, tur süresi, hedefler (sadece burayı düzenleyin)
-│   ├── oyun.js      → Oyun mantığı ve çizim
-│   └── muzik.js     → Telifsiz, anlık üretilen düğün müziği
+│   ├── oyun.js      → Düğün akışı, olaylar, çizim
+│   ├── karakter.js  → Karakterler: yüz ifadeleri, kostümler, danslar
+│   ├── muzik.js     → Telifsiz düğün müziği, efektler, MP3 çalar
+│   ├── kumanda.html → 📱 Telefondan kumanda
+│   └── sarkilar/    → 📀 Kendi MP3'leriniz buraya
 └── kopru/           → TikTok köprü programı
     ├── sunucu.js
-    ├── baslat.bat   → Windows: çift tıkla
+    ├── kisayol.js   → Masaüstüne "Canli Dugun" kısayolu koyar
+    ├── baslat.bat   → Windows: çift tıkla (Akıllı Uygulama Denetimi engellerse kisayol.js kullanın)
     └── baslat.sh    → Mac/Linux
 ```
 
 ## 🚀 Kurulum (bir kerelik)
 
 1. **Node.js** (LTS sürümü) kurun: https://nodejs.org
-2. Bu sayfada yeşil **Code** butonu → **Download ZIP** ile indirip Masaüstüne çıkarın.
-3. `kopru/baslat.bat` dosyasına çift tıklayın (Mac/Linux: `./baslat.sh`).
-4. Program sizden TikTok kullanıcı adınızı ister (`@` olmadan).
+2. Bu sayfada yeşil **Code** butonu → **Download ZIP** ile indirip Masaüstüne çıkarın (sağ tık → Tümünü ayıkla).
+3. `kopru` klasörüne girin, adres çubuğuna `cmd` yazıp Enter'a basın. Açılan pencerede sırayla:
+   - `npm install` (bir kez)
+   - `node kisayol.js` (masaüstüne **Canli Dugun** kısayolu koyar)
+4. Artık her seferinde masaüstündeki **Canli Dugun** dosyasına çift tıklayın. İlk açılışta TikTok kullanıcı adınızı sorar ve hatırlar; oyun tarayıcıda kendiliğinden açılır.
+
+> Kullanıcı adını değiştirmek için: `node sunucu.js yeniad`
 
 Köprü açıldığında şu adresler hazır olur:
 
@@ -48,23 +56,45 @@ Köprü açıldığında şu adresler hazır olur:
 - **👥 12 kişi gelsin / 💑 Çift eşleştir**: Hızlı senaryolar.
 - Hediye butonları ve **Adet** seçimi ile kombo testi yapılabilir.
 
+## 💒 Düğün nasıl akar?
+
+Her düğün yaklaşık 7 dakika sürer ve 6 aşamadan oluşur. Ekranın üstünde her an **tek bir büyük talimat** vardır: izleyici ne yapacağını oradan görür.
+
+| Aşama | Ne oluyor? | İzleyici ne yapar? |
+|---|---|---|
+| 🚪 Kapı tutma | Gelinin kardeşi kapıyı tutar, bahşiş ister. Damat kapıyı zorlar | Beğeni, yorum ve hediye kapıyı açar |
+| 💍 Nikah | Gelin düşünür ("Bi annemi arayayım 📞") | `evet` yazar (`hayır` yazan olursa gelin şok olur 😱) |
+| 👣 Ayak basma | Kim önce basacak? | `gelin` ya da `damat` yazar → **Evin reisi** belli olur |
+| 💃 Halay | Herkes halaya girer, **dans düellosu** çıkar | Beğenilerle **🔥 KOPMA ANI** gelir; düelloda `1` ya da `2` yazar |
+| 💰 Takı | Kaynana defterini açar, her takıyı ısırır | Hediyeler geline altın olur. Takı çoğalınca gelin-damat ağırlıktan eğilir 😂 |
+| 🎂 Pasta + 💐 Çiçek | Damat pastayı gelinin yüzüne bulaştırır, gelin intikam alır | `bulaştır`, sonra `çiçek` yazar → **çiçeği kapan sıradaki düğünün gelini/damadı olur** |
+| 🚗 Konvoy | Gelin arabası korna çalarak geçer, düğün özeti çıkar | — |
+
+**Gelin-damat nasıl seçilir?** Önce gelin çiçeğini kapan kişi, sonra `bekar` yazıp eşleşen (💘 Kısmet) çiftler gelir. Hiç kimse yoksa izleyiciler arasından kura çekilir ("haberleri yok 😂").
+
 ## 🎮 İzleyici ne yapar?
 
-| İzleyici | Oyunda olan |
-|---|---|
-| Herhangi bir yorum | Halaya katılır, yorumu kafasının üstünde balon olarak çıkar |
-| `bekar` (`bekar kız` / `bekar erkek`) | Bekarlar listesine girer, biri gelince **💘 KISMET!** eşleşmesi olur, çift sıradaki gelin-damat olur |
-| `!şarkı Şarkı Adı` | İstek panosuna eklenir; hediye atanınki ⭐ ile öne geçer |
-| ❤️ Beğeni | Coşku çubuğu dolar, **müzik ve halay hızlanır** |
-| 🌹 Mini hediye (1-9 coin) | Halayın önüne geçer, kalp/gül patlaması, kombo sayacı (x12) |
-| 🧿 Nazar boncuğu | Ekrana nazar boncuğu yağmuru |
-| 💍 Takı (10-499 coin) | Altın uçarak geline/damada takılır: Çeyrek, Yarım, Tam, Cumhuriyet… MC anonsu ve zılgıt |
-| 🎂 Pasta (500-4999) | Dev pasta kesimi ve havai fişekler (8 sn ekranı alır) |
-| 🦁 Efsane (5000+) | **DAVUL-ZURNA** tam ekran şov, müzik değişir, gönderen 👑 "Düğün Sahibi" olur |
-| Takı hedefi dolunca | Gelin-damat özel dansı |
-| Tur sonu (6 dk) | "Düğün bitti" ekranı, en cömert 3 kişi, sonra sıradaki çift |
+**Her izleyici bir karakter olur:** Kravatı Kafasında Dayı, Dedikoducu Teyze, Story Çeken Kuzen, Bastonla Oynayan Nine... Teyzeler arada izleyicilerin adını anarak dedikodu yapar.
 
-En çok coin atan kişi **halay başı** olur: halayın en önünde durur ve mendil sallar.
+| Yorum | Ne olur? |
+|---|---|
+| Herhangi bir yorum | Karakter düğüne gelir, yorumu kafasının üstünde çıkar |
+| `göbek` `zıpla` `kaşık` `break` `oyna` `çıldır` | Karakteri o dansı yapar |
+| `bayıl` `ağla` `öp` `zılgıt` `selam` | Bayılır, ağlar, öpücük atar, zılgıt çeker... |
+| `bekar` (`bekar kız` / `bekar erkek`) | Kısmet eşleşmesi → sıradaki gelin-damat |
+| `!şarkı Şarkı Adı` | Orgcuya istek (hediye atanın isteği ⭐ öne geçer) |
+
+| Hediye | Ne olur? |
+|---|---|
+| 🌹 1-9 coin | Karakteri çıldırır, çifte gül atar, kombo sayacı (x12) |
+| 🧿 Nazar boncuğu | Nazar yağmuru, çiftin üstüne dev nazar |
+| 💍 10-499 coin | Altın uçar, geline/damada takılır; kaynana yorum yapar ("ÇEYREK mi bu? 🤨") |
+| 🎬 500-4999 coin | **Komik sahne:** damadı havaya atma, gelinin damadı kucaklaması, tango, araya giren kaynana, damadın serenadı |
+| 🦁 5000+ coin | **DAVUL-ZURNA** tam ekran şov, gönderen dev karakter ve 👑 Düğün Sahibi olur, herkes eğilir |
+| ❤️ Beğeni | Coşku dolar → 🔥 **KOPMA ANI** (herkes çıldırır, ekran sallanır) |
+| ➕ Takip | 📸 Aile fotoğrafı flaşı |
+
+En çok coin atan kişi **🧣 halay başı** olur, düelloyu kazanan **👑 pistin kralı** olur.
 
 ## 📀 Kendi şarkılarınız
 
@@ -80,7 +110,7 @@ Yeni dosya atarsanız oyun 20 saniye içinde görür, yeniden başlatmanız gere
 
 | Nerede | Nasıl |
 |---|---|
-| Klavye (oyun penceresi seçiliyken) | **M** müzik aç/kapa · **N** sonraki şarkı · **+ / −** ses · **B** düğünü bitir |
+| Klavye (oyun penceresi seçiliyken) | **M** müzik aç/kapa · **N** sonraki şarkı · **S** sonraki aşama · **+ / −** ses · **B** düğünü bitir |
 | Test paneli | 🔊 Müzik butonu |
 | 📱 Telefon | Köprü penceresinde yazan `http://192.168.x.x:8080/kumanda.html` adresini telefonda açın (aynı Wi-Fi). Müzik aç/kapa, sonraki şarkı, ses, istek silme ve listeden tek dokunuşla şarkı çalma burada. |
 
@@ -90,7 +120,7 @@ Yeni dosya atarsanız oyun 20 saniye içinde görür, yeniden başlatmanız gere
 
 ## 🎬 Tanıtım videosu (takipçi toplamak için)
 
-Test panelindeki **🎬 Tanıtım videosu çek** butonuna basın ya da doğrudan `http://localhost:8080/?video=1` adresini açın. **🔴 Kaydı Başlat** deyince oyun kendi kendine 40 saniyelik bir düğün oynar: halay, kısmet eşleşmesi, takı, pasta, davul-zurna ve en sonda "@hesabınız TAKİP ET" kartı. Video bitince İndirilenler klasörüne kaydedilir (1080×1920, sesli).
+Test panelindeki **🎬 Video çek** butonuna basın ya da doğrudan `http://localhost:8080/?video=1` adresini açın. **🔴 Kaydı Başlat** deyince oyun kendi kendine hızlandırılmış bir düğün oynar (~1,5 dk): kapı tutma, nikah, ayak basma, halay, düello, kopma anı, takı, komik sahne, davul-zurna, pasta bulaştırma, gelin çiçeği, konvoy ve en sonda "@hesabınız TAKİP ET" kartı. Video bitince İndirilenler klasörüne kaydedilir (1080×1920, sesli).
 
 - Her video farklı isim ve yorumlarla oynar. Birkaç tane çekip farklı günlerde paylaşabilirsiniz.
 - Videoda klasördeki MP3'ler çalmaz, sadece telifsiz orgcu müziği kullanılır.
@@ -99,10 +129,10 @@ Test panelindeki **🎬 Tanıtım videosu çek** butonuna basın ya da doğrudan
 
 ## ⚙️ Ayarlar (`oyun/ayarlar.js`)
 
-- `turSuresi`: Bir düğünün süresi (varsayılan 6 dakika)
+- `fazSureleri`: Her aşamanın süresi (kapı, nikah, halay, takı...)
 - `kademeler`: Coin eşikleri (mini / takı / pasta / efsane)
 - `ozelHediyeler`: Belirli bir hediyeyi isimle bir efekte bağlar (ör. `"lion": "efsane"`)
-- `takiHedefi`: Özel dans için gereken coin
+- `takiHedefi`: Kaç coin takıda gelin-damat ağırlıktan eğilsin
 - `yasakliKelimeler`: Ekrana çıkmayacak kelimeler
 - `mp3Ses`: MP3 ses seviyesi
 - `mp3EnFazlaSaniye`: Her şarkı en fazla kaç saniye çalsın (0 = tamamı). Telif riskini azaltmak için örneğin `90`

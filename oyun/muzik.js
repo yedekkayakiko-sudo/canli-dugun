@@ -311,6 +311,54 @@
     tek(t + 1.2, 1.4, efektGain);
   });
 
+  // ---------- Komik efektler ----------
+  function osc(t, tip, f1, f2, sure, ses, hedef = efektGain, filtre) {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = tip; o.frequency.setValueAtTime(f1, t);
+    if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + sure);
+    zarf(g, t, 0.01, ses, sure);
+    if (filtre) { const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = filtre; o.connect(f).connect(g); } else o.connect(g);
+    g.connect(hedef); o.start(t); o.stop(t + sure + 0.05);
+    return o;
+  }
+  function gur(t, tip, frek, q, sure, ses, kayma) {
+    const n = ctx.createBufferSource(); n.buffer = gurultu;
+    const f = ctx.createBiquadFilter(); f.type = tip; f.frequency.setValueAtTime(frek, t); f.Q.value = q;
+    if (kayma) f.frequency.exponentialRampToValueAtTime(kayma, t + sure);
+    const g = ctx.createGain(); zarf(g, t, 0.003, ses, sure);
+    n.connect(f).connect(g).connect(efektGain); n.start(t, Math.random() * 0.4); n.stop(t + sure + 0.05);
+  }
+  M.korna = e(function (t) {              // düt düt düüüt (konvoy)
+    [[0, 0.16], [0.24, 0.16], [0.48, 0.6]].forEach(([d, l]) => [392, 494].forEach(f => osc(t + d, "square", f, 0, l, 0.07, efektGain, 1800)));
+  });
+  M.alkis = e(function (t) {
+    for (let i = 0; i < 46; i++) gur(t + Math.random() * 1.7, "bandpass", 1000 + Math.random() * 1800, 1.1, 0.05, 0.06 + Math.random() * 0.1);
+  });
+  M.boing = e(function (t) {
+    const o = osc(t, "sine", 140, 620, 0.35, 0.22);
+    const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 22; lg.gain.value = 60;
+    l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + 0.4);
+  });
+  M.splat = e(function (t) { gur(t, "lowpass", 900, 0.7, 0.25, 0.6, 200); osc(t, "sine", 160, 50, 0.2, 0.4); });
+  M.kasa = e(function (t) { gur(t, "highpass", 3000, 0.7, 0.03, 0.3); [1760, 2637].forEach((f, i) => osc(t + 0.07 + i * 0.05, "sine", f, 0, 0.5, 0.14)); });
+  M.islik = e(function (t, yukari) {      // kayma düdüğü
+    const o = osc(t, "sine", yukari ? 450 : 1900, yukari ? 1900 : 380, 0.75, 0.18);
+    const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 7; lg.gain.value = 25;
+    l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + 0.8);
+  });
+  M.kapi = e(function (t) { dum(t, 1.5, efektGain); gur(t + 0.02, "bandpass", 700, 1.5, 0.35, 0.5, 200); });
+  M.flas = e(function (t) { gur(t, "highpass", 4000, 0.7, 0.04, 0.35); osc(t + 0.03, "sine", 2800, 900, 0.18, 0.06); });
+  M.ooh = e(function (t) {               // kalabalık "ooooh"
+    const f = ctx.createBiquadFilter(); f.type = "bandpass"; f.Q.value = 2.2;
+    f.frequency.setValueAtTime(450, t); f.frequency.linearRampToValueAtTime(900, t + 0.6); f.frequency.linearRampToValueAtTime(600, t + 1.3);
+    const g = ctx.createGain(); zarf(g, t, 0.15, 0.22, 1.2); f.connect(g).connect(efektGain);
+    [170, 205, 232, 260, 300].forEach(fr => { const o = ctx.createOscillator(); o.type = "sawtooth"; o.frequency.setValueAtTime(fr, t); o.frequency.linearRampToValueAtTime(fr * 1.12, t + 0.6); o.frequency.linearRampToValueAtTime(fr * 0.95, t + 1.3); o.connect(f); o.start(t); o.stop(t + 1.45); });
+  });
+  M.cizirti = e(function (t) { gur(t, "bandpass", 3200, 4, 0.18, 0.5, 300); gur(t + 0.18, "bandpass", 300, 4, 0.2, 0.45, 2400); });
+  M.opucuk = e(function (t) { gur(t, "bandpass", 2600, 3, 0.04, 0.5); osc(t + 0.01, "sine", 1300, 600, 0.07, 0.12); });
+  M.dusus = e(function (t) { M.islik(false); setTimeout(() => ctx && dum(ctx.currentTime, 1.3, efektGain), 700); });
+  M.hey = e(function (t) { [0, 0.5].forEach(d => { dum(t + d, 1.4, efektGain); gur(t + d, "bandpass", 900, 0.8, 0.25, 0.35, 500); }); });
+
   // ---------- MP3 (sarkilar klasörü) ----------
   let mp3El = null, mp3Gain = null, analiz = null, fftBuf = null, mp3Calan = false, mp3Zaman = null;
   let muzikAcikMi = true, mp3SesDegeri = (window.AYAR?.mp3Ses ?? 0.9);

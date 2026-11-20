@@ -18,7 +18,7 @@
 
   #panel { width: 340px; flex-shrink: 0; background: var(--panel); border-left: 1px solid var(--kenar); padding: 14px; overflow-y: auto; font-size: 14px; }
   #panel h2 { margin: 0 0 6px; font-size: 20px; color: var(--vurgu); }
-  #panel h3 { margin: 14px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: #ce93d8; }
+  #panel h3 { margin: 12px 0 6px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: #ce93d8; }
   .satir { display: flex; gap: 6px; flex-wrap: wrap; }
   button { font: inherit; font-weight: 700; border: 0; border-radius: 10px; padding: 7px 10px; background: #3a2a44; color: #fff; cursor: pointer; }
   button:hover { background: #4d3859; }
@@ -42,7 +42,7 @@
 <body>
 <div id="videoKutu"><div class="kart" id="videoKart">
   <h2>🎬 Tanıtım Videosu</h2>
-  <p>Butona basınca oyun kendi kendine <b>40 saniyelik</b> bir düğün oynar ve kaydeder. Halay, kısmet eşleşmesi, takı, pasta ve davul-zurna sırayla gelir.</p>
+  <p>Butona basınca oyun kendi kendine <b>hızlandırılmış bir düğün</b> oynar ve kaydeder (~1,5 dk): kapı tutma, nikah, ayak basma, halay, kopma anı, takı, komik sahne, davul-zurna, pasta bulaştırma, gelin çiçeği ve konvoy.</p>
   <p class="kucuk">Kayıt bitene kadar bu sekmeyi açık bırakın, başka sekmeye geçmeyin. Bitince video kendiliğinden indirilir.</p>
   <button class="ana" id="videoBasla">🔴 Kaydı Başlat</button>
 </div></div>
@@ -52,43 +52,63 @@
   <aside id="panel">
     <h2>🧪 Test Paneli</h2>
     <div class="kucuk">Yayında gizlemek için adrese <b>?yayin=1</b> ekleyin.</div>
-    <div class="durum">Köprü: <b id="koprüDurum" class="kapali">bağlı değil</b><br>Ses: <b id="sesDurum" class="kapali">kapalı</b></div>
+    <div class="durum">Köprü: <b id="koprüDurum" class="kapali">bağlı değil</b><br>Ses: <b id="sesDurum" class="kapali">kapalı</b><br>Aşama: <b id="fazDurum">—</b></div>
     <div class="satir">
-      <button class="ana" id="sesBtn">🔊 Sesi Başlat</button>
-      <button id="demoBtn">🤖 Otomatik Demo: KAPALI</button>
-      <button onclick="location.href='?video=1'">🎬 Tanıtım videosu çek</button>
+      <button class="ana" id="demoBtn">🤖 Otomatik Demo: KAPALI</button>
+      <button id="fazBtn">⏭ Sonraki aşama</button>
+      <button onclick="location.href='?video=1'">🎬 Video çek</button>
+      <button id="sesBtn">🔊 Ses</button>
     </div>
 
     <h3>İzleyici</h3>
-    <label>Kullanıcı adı</label>
     <div class="satir" style="flex-wrap:nowrap"><input id="kullanici"><button id="rastgeleBtn" title="Rastgele izleyici">🎲</button></div>
+    <div class="satir" style="margin-top:6px">
+      <button id="kalabalikBtn">👥 12 kişi gelsin</button>
+      <button id="ciftBtn">💘 Kısmet eşleştir</button>
+    </div>
 
-    <h3>Yorumlar</h3>
+    <h3>Aşama yorumları</h3>
+    <div class="satir">
+      <button data-yorum="evet">💍 evet</button>
+      <button data-yorum="hayır">🙅 hayır</button>
+      <button data-yorum="gelin">👰 gelin</button>
+      <button data-yorum="damat">🤵 damat</button>
+      <button data-yorum="bulaştır">🎂 bulaştır</button>
+      <button data-yorum="çiçek">💐 çiçek</button>
+      <button data-yorum="1">⚔️ 1</button>
+      <button data-yorum="2">⚔️ 2</button>
+    </div>
+
+    <h3>Karakter komutları</h3>
+    <div class="satir">
+      <button data-yorum="oyna">🕺 oyna</button>
+      <button data-yorum="göbek">💃 göbek</button>
+      <button data-yorum="zıpla">🦘 zıpla</button>
+      <button data-yorum="kaşık">🥄 kaşık</button>
+      <button data-yorum="break">🌀 break</button>
+      <button data-yorum="bayıl">😵 bayıl</button>
+      <button data-yorum="ağla">😭 ağla</button>
+      <button data-yorum="zılgıt">🎉 zılgıt</button>
+      <button data-yorum="öp">😘 öp</button>
+    </div>
+
+    <h3>Diğer yorumlar</h3>
     <div class="satir">
       <button data-yorum="Maşallah çok güzel!">💬 Yorum</button>
-      <button data-yorum="bekar">💘 bekar</button>
       <button data-yorum="bekar kız">💘 bekar kız</button>
       <button data-yorum="bekar erkek">💘 bekar erkek</button>
       <button data-yorum="!şarkı Halay Havası">🎵 !şarkı</button>
     </div>
-    <label>Serbest yorum</label>
-    <div class="satir" style="flex-wrap:nowrap"><input id="serbest" placeholder="ör: !şarkı Gelin Ayşe"><button id="gonderBtn">Gönder</button></div>
+    <div class="satir" style="flex-wrap:nowrap;margin-top:6px"><input id="serbest" placeholder="Serbest yorum yaz…"><button id="gonderBtn">Gönder</button></div>
 
     <h3>Hediyeler</h3>
     <div class="satir" id="hediyeler"></div>
-    <label>Adet (kombo)</label>
-    <select id="adet"><option>1</option><option>5</option><option>10</option><option>50</option></select>
-
-    <h3>Diğer</h3>
-    <div class="satir">
-      <button id="begeniBtn">❤️ 15 Beğeni</button>
+    <div class="satir" style="margin-top:6px;align-items:center;flex-wrap:nowrap"><label style="margin:0;white-space:nowrap">Adet:</label>
+    <select id="adet"><option>1</option><option>5</option><option>10</option><option>50</option></select></div>
+    <div class="satir" style="margin-top:6px">
+      <button id="begeniBtn">❤️ 30 Beğeni</button>
       <button id="takipBtn">➕ Takip</button>
       <button id="paylasBtn">📣 Paylaş</button>
-      <button id="girisBtn">👋 Giriş</button>
-    </div>
-    <div class="satir" style="margin-top:6px">
-      <button id="kalabalikBtn">👥 12 kişi gelsin</button>
-      <button id="ciftBtn">💑 Çift eşleştir</button>
     </div>
 
     <h3>Yayıncı</h3>
@@ -98,20 +118,29 @@
       <button id="turBtn">⏹ Düğünü bitir</button>
     </div>
     <div class="durum" id="sarkiDurum">📀 Şarkı klasörü: yükleniyor…</div>
-    <p class="kucuk"><b>Klavye:</b> <b>M</b> müzik aç/kapa · <b>N</b> sonraki şarkı · <b>+ / −</b> ses · <b>B</b> düğünü bitir<br>
-    📱 <b>Telefondan kumanda:</b> <a href="kumanda.html" target="_blank" style="color:#ffd54a">kumanda.html</a> (adres köprü penceresinde yazar)</p>
-    <p class="kucuk">Kendi şarkılarınız: <b>oyun/sarkilar</b> klasörüne MP3 atın. İzleyici <b>!şarkı</b> ile adını yazınca çalar. Eşleşmezse orgcu kendi telifsiz ezgisini çalar.</p>
+    <p class="kucuk"><b>Klavye:</b> <b>M</b> müzik · <b>N</b> sonraki şarkı · <b>S</b> sonraki aşama · <b>+ / −</b> ses · <b>B</b> düğünü bitir<br>
+    📱 <b>Telefondan kumanda:</b> <a href="kumanda.html" target="_blank" style="color:#ffd54a">kumanda.html</a></p>
   </aside>
 </div>
 
 <script src="ayarlar.js"></script>
+<script>
+  // Video modunda düğün hızlandırılır (oyun.js yüklenmeden önce ayarlanmalı)
+  if (new URLSearchParams(location.search).get("video") === "1") {
+    AYAR.videoModu = true;
+    AYAR.fazSureleri = { kapi: 7, nikah: 6, ayakOy: 4, halay: 12, taki: 9, pastaOy: 3, cicekOy: 3, final: 7, duello: 5, kopma: 5 };
+    AYAR.coskuIcinBegeni = 250;
+  }
+</script>
 <script src="muzik.js"></script>
+<script src="karakter.js"></script>
 <script src="oyun.js"></script>
 <script>
 (function () {
   const q = new URLSearchParams(location.search);
   if (q.get("yayin") === "1") document.body.classList.add("yayin");
   const $ = (id) => document.getElementById(id);
+  const sec = (l) => l[Math.floor(Math.random() * l.length)];
 
   // ---------- Ses ----------
   function sesBaslat() {
@@ -124,7 +153,7 @@
   }
   $("sesBtn").onclick = sesBaslat;
   document.addEventListener("pointerdown", sesBaslat, { once: true });
-  sesBaslat(); // OBS'de otomatik çalar; normal tarayıcıda ilk tıklamada açılır
+  sesBaslat();
 
   // ---------- Köprü (WebSocket) ----------
   const adres = q.get("ws") || AYAR.koprüAdresi;
@@ -141,81 +170,128 @@
     } catch (e) {} };
     ws.onclose = () => { $("koprüDurum").textContent = "bağlı değil"; $("koprüDurum").className = "kapali"; setTimeout(baglan, bekle); bekle = Math.min(bekle * 2, 10000); };
   }
-  baglan();
-
-  // Kumandaya (telefon) durum bildir
+  if (!AYAR.videoModu) baglan();
   function durumGonder() { if (ws && ws.readyState === 1) ws.send(JSON.stringify(Oyun.durumOzeti())); }
   setInterval(durumGonder, 1000);
 
-  // ---------- Müzik kontrolleri: buton + klavye ----------
-  function muzikEtiketi() {
+  // ---------- Durum + müzik kontrolleri ----------
+  function etiketler() {
     const acik = Muzik.muzikAcikMi();
     $("muzikBtn").textContent = acik ? "🔊 Müzik: AÇIK" : "🔇 Müzik: KAPALI";
     $("muzikBtn").className = acik ? "ana" : "";
     const d = Oyun.durumOzeti();
     $("sarkiDurum").textContent = d.sarkilar.length ? `📀 Klasörde ${d.sarkilar.length} şarkı • Ses %${d.ses}` : "📀 Klasörde şarkı yok (oyun/sarkilar)";
+    $("fazDurum").textContent = `${d.faz} (${d.kalan} sn)`;
   }
-  setInterval(muzikEtiketi, 1000);
-  $("muzikBtn").onclick = () => { Oyun.komut({ komut: "muzik" }); muzikEtiketi(); };
+  setInterval(etiketler, 500);
+  $("muzikBtn").onclick = () => { Oyun.komut({ komut: "muzik" }); etiketler(); };
+  $("fazBtn").onclick = () => Oyun.sonrakiFaz();
   document.addEventListener("keydown", (e) => {
     if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT" || e.ctrlKey || e.altKey || e.metaKey) return;
     const t = e.key.toLocaleLowerCase("tr");
     if (t === "m") Oyun.komut({ komut: "muzik" });
     else if (t === "n") Oyun.komut({ komut: "sonraki" });
+    else if (t === "s") Oyun.komut({ komut: "sonrakiFaz" });
     else if (t === "b") Oyun.komut({ komut: "turBitir" });
     else if (e.key === "+" || e.key === "=") Oyun.komut({ komut: "sesArti" });
     else if (e.key === "-") Oyun.komut({ komut: "sesEksi" });
     else return;
-    sesBaslat(); muzikEtiketi(); durumGonder();
+    sesBaslat(); etiketler(); durumGonder();
   });
 
   // ---------- Test paneli ----------
   const ADLAR = ["ayse_34", "mehmet.dgn", "zeynep_k", "ahmet_yildiz", "elif.ozz", "burak_06", "selin.akk", "emre35",
     "merve__b", "can.krk", "fatma.tt", "oguz_h", "deniz.ege", "kerem07", "esra_nur", "yusuf.tr", "buse.ylmz", "hakan_61",
-    "ece.sn", "murat_27", "gizem.cc", "serkan.01", "irem_ss", "tolga.mrt"];
-  const rastgeleAd = () => ADLAR[Math.floor(Math.random() * ADLAR.length)] + (Math.random() < 0.3 ? Math.floor(Math.random() * 90 + 10) : "");
+    "ece.sn", "murat_27", "gizem.cc", "serkan.01", "irem_ss", "tolga.mrt", "sevda.44", "kaan_55", "nur.akn", "baris.ty"];
+  const rastgeleAd = () => sec(ADLAR) + (Math.random() < 0.3 ? Math.floor(Math.random() * 90 + 10) : "");
   $("kullanici").value = rastgeleAd();
   $("rastgeleBtn").onclick = () => { $("kullanici").value = rastgeleAd(); };
   const kim = (ad) => { ad = ad || $("kullanici").value.trim() || rastgeleAd(); return { id: ad, ad }; };
+  const yorum = (k, metin) => Oyun.olay({ tip: "yorum", ...k, metin });
+  const hediye = (k, ad, coin, adet = 1) => Oyun.olay({ tip: "hediye", ...k, hediye: ad, coin, adet });
 
-  document.querySelectorAll("[data-yorum]").forEach(b => b.onclick = () => Oyun.olay({ tip: "yorum", ...kim(), metin: b.dataset.yorum }));
-  $("gonderBtn").onclick = () => { const m = $("serbest").value.trim(); if (m) Oyun.olay({ tip: "yorum", ...kim(), metin: m }); };
+  document.querySelectorAll("[data-yorum]").forEach(b => b.onclick = () => yorum(kim(), b.dataset.yorum));
+  $("gonderBtn").onclick = () => { const m = $("serbest").value.trim(); if (m) yorum(kim(), m); };
   $("serbest").onkeydown = (e) => { if (e.key === "Enter") $("gonderBtn").click(); };
-
   AYAR.testHediyeleri.forEach(h => {
     const b = document.createElement("button");
     b.className = h.coin >= 500 ? "ana" : h.coin >= 10 ? "altin" : "";
     b.textContent = `${h.emoji} ${h.ad} (${h.coin})`;
-    b.onclick = () => Oyun.olay({ tip: "hediye", ...kim(), hediye: h.ad, coin: h.coin, adet: Number($("adet").value) });
+    b.onclick = () => hediye(kim(), h.ad, h.coin, Number($("adet").value));
     $("hediyeler").appendChild(b);
   });
-
-  $("begeniBtn").onclick = () => Oyun.olay({ tip: "begeni", ...kim(), adet: 15 });
+  $("begeniBtn").onclick = () => Oyun.olay({ tip: "begeni", ...kim(), adet: 30 });
   $("takipBtn").onclick = () => Oyun.olay({ tip: "takip", ...kim() });
   $("paylasBtn").onclick = () => Oyun.olay({ tip: "paylasim", ...kim() });
-  $("girisBtn").onclick = () => Oyun.olay({ tip: "giris", ...kim() });
   $("turBtn").onclick = () => Oyun.turuBitir();
   $("sarkiBtn").onclick = () => Oyun.sarkiAtla();
-  $("kalabalikBtn").onclick = () => {
-    const yorumlar = ["Maşallah 🧿", "Halay başı benim!", "Oley oley", "Gelin çok güzel 😍", "Davul zurna nerde", "Mutluluklar!", "Selam herkese", "Kalkın oynayın!"];
-    for (let i = 0; i < 12; i++) setTimeout(() => Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: yorumlar[i % yorumlar.length] }), i * 120);
-  };
-  $("ciftBtn").onclick = () => {
-    Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: "bekar kız" });
-    setTimeout(() => Oyun.olay({ tip: "yorum", ...kim(rastgeleAd()), metin: "bekar erkek" }), 400);
+  const YORUM = ["Maşallah 🧿", "Oley oley 💃", "Halay başı benim!", "Gelin çok güzel 😍", "Davul zurna nerde?", "Mutluluklar!", "Kalkın oynayın!", "Selam düğün evi 👋", "Çok eğlenceli 😂", "Ben de geldim!", "Yemekler ne zaman?", "Damat yakışıklıymış"];
+  function kalabalikGetir(n) { for (let i = 0; i < n; i++) setTimeout(() => yorum(kim(rastgeleAd()), sec(YORUM)), i * 110); }
+  $("kalabalikBtn").onclick = () => kalabalikGetir(12);
+  $("ciftBtn").onclick = () => { yorum(kim(rastgeleAd()), "bekar kız"); setTimeout(() => yorum(kim(rastgeleAd()), "bekar erkek"), 400); };
+
+  // ---------- Akıllı bot: aşamaya göre izleyici gibi davranır ----------
+  const bayrak = {};
+  function botAdim(video) {
+    const S = Oyun.durum, f = S.faz, r = Math.random();
+    const yeni = kim(rastgeleAd());
+    if (S.kalabalik.length < (video ? 15 : 12) && r < 0.4) return yorum(yeni, sec(YORUM));
+    const m = S.kalabalik.length ? S.kisiler.get(sec(S.kalabalik)) : null;
+    const k = m && Math.random() < 0.85 ? { id: m.id, ad: m.ad } : yeni;
+    if (S.duello && !S.duello.bitti && r < 0.7) return yorum(k, Math.random() < 0.55 ? "1" : "2");
+    const hareket = () => yorum(k, sec(["göbek", "zıpla", "break", "oyna", "kaşık", "zılgıt", "bayıl", "öp"]));
+    switch (f.ad) {
+      case "kapi":
+        if (r < 0.55) return Oyun.olay({ tip: "begeni", ...k, adet: video ? 40 : 15 });
+        if (r < 0.7) return hediye(k, "Rose", 1, 1 + Math.floor(Math.random() * 5));
+        if (r < 0.76) return hediye(k, "Sunglasses", 199, 1);
+        return yorum(k, sec(["Kapıyı açın!", "Bahşiş verdik!", "Gelin nerde?", "Hadi kardeş!"]));
+      case "nikah":
+        if (f.adim === "soru") return r < 0.75 ? yorum(k, "evet") : r < 0.8 ? yorum(k, "hayır") : yorum(k, sec(YORUM));
+        if (f.adim === "ayakOy") return yorum(k, Math.random() < 0.6 ? "gelin" : "damat");
+        return yorum(k, sec(["Oleeey!", "Maşallah!", "🎉🎉🎉"]));
+      case "halay":
+        if (video && !bayrak.sahne && Oyun.durum.faz && performance.now() / 1000 - Oyun.durum.faz.bas > 7) { bayrak.sahne = true; return hediye(k, "Cake", 1000, 1); }
+        if (r < 0.35) return Oyun.olay({ tip: "begeni", ...k, adet: video ? 45 : 20 });
+        if (r < 0.6) return hareket();
+        if (r < 0.7) return hediye(k, "Rose", 1, 1 + Math.floor(Math.random() * 8));
+        if (r < 0.73) return yorum(k, "!şarkı " + sec(["Gelin Alma Havası", "Damat Halayı", "Roman Havası"]));
+        if (!video && r < 0.735) return hediye(k, "Cake", 1000, 1);
+        return yorum(k, sec(YORUM));
+      case "taki":
+        if (video && !bayrak.aslan && performance.now() / 1000 - f.bas > 3) { bayrak.aslan = true; return hediye(k, "Lion", 29999, 1); }
+        if (r < 0.35) return hediye(k, sec(["Sunglasses", "Hand Hearts"]), Math.random() < 0.5 ? 199 : 100, 1);
+        if (r < 0.45) return hediye(k, "Rose", 1, 5);
+        if (r < 0.5) return hediye(k, "Evil Eye", 5, 2);
+        if (!video && r < 0.52) return hediye(k, "Cake", 1000, 1);
+        if (!video && r < 0.525) return hediye(k, "Lion", 29999, 1);
+        return r < 0.75 ? hareket() : yorum(k, sec(YORUM));
+      case "pasta":
+        if (f.adim === "oy") return yorum(k, "bulaştır");
+        if (f.adim === "cicekOy") return yorum(k, "çiçek");
+        return r < 0.5 ? hareket() : yorum(k, sec(["Hahahaha 😂", "Bulaştırdı!", "İntikam! 😈", "Maşallah"]));
+      default:
+        return r < 0.5 ? Oyun.olay({ tip: "begeni", ...k, adet: 10 }) : yorum(k, sec(["Mutluluklar! 💍", "Maşallah", "Düt düt düüüt 🚗"]));
+    }
+  }
+
+  let demo = null;
+  $("demoBtn").onclick = () => {
+    sesBaslat();
+    if (demo) { clearInterval(demo); demo = null; $("demoBtn").textContent = "🤖 Otomatik Demo: KAPALI"; return; }
+    $("demoBtn").textContent = "🤖 Otomatik Demo: AÇIK";
+    if (Oyun.durum.kalabalik.length < 6) kalabalikGetir(10);
+    demo = setInterval(() => botAdim(false), 650);
   };
 
   // ---------- Tanıtım videosu (?video=1) ----------
-  if (q.get("video") === "1") {
+  if (AYAR.videoModu) {
     document.body.classList.add("yayin", "video");
-    AYAR.videoModu = true;            // telifli MP3 çalmaz, ekranda @hesap görünür
-    Oyun.durum.takiHedef = 3000;      // hedef çubuğu video boyunca dolsun
     $("videoBasla").onclick = videoCek;
   }
-
   function videoCek() {
     sesBaslat();
-    Muzik.mp3Durdur(); Oyun.sarkiAtla();
+    Muzik.mp3Durdur();
     const tuval = $("tuval");
     const akis = new MediaStream([...tuval.captureStream(30).getVideoTracks(), ...Muzik.kayitAkisi().getAudioTracks()]);
     const turler = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4;codecs=avc1.42E01E,opus", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
@@ -233,61 +309,27 @@
       a.download = `canli-dugun-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.${uzanti}`;
       document.body.appendChild(a); a.click();
       $("videoKart").innerHTML = `<h2>✅ Video indirildi!</h2><p>İndirilenler klasörüne <b>.${uzanti}</b> dosyası olarak kaydedildi.</p>
-        <p>Her video farklı isim ve yorumlarla oynar. Yenisi için:</p><button class="ana" onclick="location.reload()">🔁 Yeni video çek</button>`;
+        <p>Her video farklı isim, karakter ve olaylarla oynar. Yenisi için:</p><button class="ana" onclick="location.reload()">🔁 Yeni video çek</button>`;
       $("videoKutu").style.display = "flex";
     };
     $("videoKutu").style.display = "none";
     document.body.classList.add("kayitta");
-    kayit.start(1000);
-    senaryo(() => kayit.stop());
+    // Kalabalık + kısmetli çift → yeni düğün başlar
+    kalabalikGetir(13);
+    setTimeout(() => { yorum(kim(rastgeleAd()), "bekar kız"); yorum(kim(rastgeleAd()), "bekar erkek"); }, 1500);
+    setTimeout(() => { Oyun.yeniDugun(); kayit.start(1000); }, 2300);
+    const basTur = () => Oyun.durum.turNo;
+    let ilkTur = null, bitiyor = false;
+    const bot = setInterval(() => {
+      if (ilkTur === null && Oyun.durum.turNo > 1) ilkTur = basTur();
+      if (ilkTur !== null && basTur() > ilkTur && !bitiyor) {
+        bitiyor = true; clearInterval(bot);
+        Oyun.sonKart(); setTimeout(() => kayit.stop(), 4500);
+        return;
+      }
+      if (ilkTur !== null) botAdim(true);
+    }, 260);
   }
-
-  function senaryo(bitti) {
-    const adlar = ADLAR.slice().sort(() => Math.random() - 0.5);
-    let i = 0;
-    const kisi = () => { const ad = adlar[i++ % adlar.length] + (i > adlar.length ? i : ""); return { id: ad, ad }; };
-    const sec = (l) => l[Math.floor(Math.random() * l.length)];
-    const YORUM = ["Maşallah 🧿", "Oley oley 💃", "Halay başı benim!", "Gelin çok güzel 😍", "Davul zurna nerde?", "Mutluluklar!", "Kalkın oynayın!", "Selam düğün evi 👋", "Çok eğlenceli 😂", "Ben de geldim!"];
-    const SARKI = ["Gelin Alma Havası", "Damat Halayı", "Kına Gecesi", "Roman Havası"];
-    const olay = (o) => Oyun.olay(o);
-    const zaman = [];
-    const at = (ms, fn) => zaman.push(setTimeout(fn, ms));
-    for (let j = 0; j < 14; j++) at(j * 170, () => olay({ tip: "yorum", ...kisi(), metin: sec(YORUM) }));
-    [2600, 2900, 3200].forEach(ms => at(ms, () => olay({ tip: "begeni", ...kisi(), adet: 90 })));
-    const gelin = kisi(), damat = kisi();
-    at(3500, () => olay({ tip: "yorum", ...gelin, metin: "bekar kız" }));
-    at(4300, () => olay({ tip: "yorum", ...damat, metin: "bekar erkek" }));
-    const gul = kisi(), gul2 = kisi();
-    at(9000, () => olay({ tip: "hediye", ...gul, hediye: "Rose", coin: 1, adet: 15 }));
-    at(9600, () => olay({ tip: "hediye", ...gul2, hediye: "Rose", coin: 1, adet: 8 }));
-    at(10500, () => olay({ tip: "hediye", ...kisi(), hediye: "Sunglasses", coin: 199, adet: 1 }));
-    at(11500, () => olay({ tip: "hediye", ...kisi(), hediye: "Sunglasses", coin: 199, adet: 2 }));
-    at(12500, () => olay({ tip: "hediye", ...kisi(), hediye: "Hand Hearts", coin: 100, adet: 1 }));
-    at(13500, () => olay({ tip: "yorum", ...kisi(), metin: "!şarkı " + sec(SARKI) }));
-    at(15000, () => olay({ tip: "hediye", ...kisi(), hediye: "Evil Eye", coin: 5, adet: 3 }));
-    for (let j = 0; j < 4; j++) at(16000 + j * 400, () => olay({ tip: "yorum", ...kisi(), metin: sec(YORUM) }));
-    at(18000, () => olay({ tip: "hediye", ...kisi(), hediye: "Cake", coin: 1000, adet: 1 }));
-    at(26500, () => olay({ tip: "hediye", ...kisi(), hediye: "Lion", coin: 29999, adet: 1 }));
-    at(37000, () => Oyun.sonKart());
-    at(41500, bitti);
-  }
-
-  // ---------- Otomatik demo ----------
-  let demo = null;
-  $("demoBtn").onclick = () => {
-    if (demo) { clearInterval(demo); demo = null; $("demoBtn").textContent = "🤖 Otomatik Demo: KAPALI"; return; }
-    $("demoBtn").textContent = "🤖 Otomatik Demo: AÇIK";
-    demo = setInterval(() => {
-      const r = Math.random(), k = kim(rastgeleAd());
-      if (r < 0.45) Oyun.olay({ tip: "yorum", ...k, metin: ["Maşallah", "oley", "halay!", "çok güzel", "selam", "😍😍"][Math.floor(Math.random() * 6)] });
-      else if (r < 0.55) Oyun.olay({ tip: "yorum", ...k, metin: Math.random() < 0.5 ? "bekar kız" : "bekar erkek" });
-      else if (r < 0.6) Oyun.olay({ tip: "yorum", ...k, metin: "!şarkı " + ["Gelin Havası", "Damat Halayı", "Roman Oyunu", "Kına Gecesi"][Math.floor(Math.random() * 4)] });
-      else if (r < 0.8) Oyun.olay({ tip: "begeni", ...k, adet: 10 });
-      else if (r < 0.93) Oyun.olay({ tip: "hediye", ...k, hediye: "Rose", coin: 1, adet: 1 + Math.floor(Math.random() * 8) });
-      else if (r < 0.985) Oyun.olay({ tip: "hediye", ...k, hediye: "Sunglasses", coin: 199, adet: 1 });
-      else Oyun.olay({ tip: "hediye", ...k, hediye: Math.random() < 0.7 ? "Cake" : "Lion", coin: Math.random() < 0.7 ? 1000 : 29999, adet: 1 });
-    }, 700);
-  };
 })();
 </script>
 </body>
