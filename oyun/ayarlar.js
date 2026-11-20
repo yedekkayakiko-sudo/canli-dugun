@@ -41,8 +41,14 @@ window.AYAR = {
   // Yorumlar ekranda kaç saniye balon olarak görünsün
   balonSuresi: 5,
 
-  // Yasaklı kelimeler: bu kelimeleri içeren yorum/istek ekrana çıkmaz
-  yasakliKelimeler: ["küfür1", "küfür2"],
+  // Yasaklı kelimeler: bu kelimeleri içeren yorum/istek ekrana çıkmaz, küfürlü takma ad yerine kullanıcı adı görünür
+  //  "kelime" → sadece tam kelime,  "kelime*" → o kelimeyle başlayanlar da
+  //  Kendi listenizi ekleyebilirsiniz. TikTok'un kendi filtresi de ayrıca çalışır.
+  yasakliKelimeler: [
+    "amk", "aq", "amq", "amına*", "amina*", "amcık*", "amcik*", "sik", "sikik*", "siktir*", "sikerim*", "sikeyim*",
+    "orospu*", "oç", "piç", "pic", "yarrak*", "yarak*", "göt", "got", "götveren*", "ibne*", "pezevenk*",
+    "kahpe*", "ananı*", "anani*", "şerefsiz*", "serefsiz*", "gavat*", "kaltak*", "fahişe*",
+  ],
 
   // ----------------------------------------------------------
   //  HEDİYE KADEMELERİ — hediyenin TEK adet coin değerine göre

@@ -84,12 +84,15 @@
   const NPC_DAMAT = { id: "_damat", ad: "Damat Bey", npc: true, ton: 220, ten: 2, tohum: 3.4, puanTur: 0, puanToplam: 0, ek: {} };
   S.kisiler.set(NPC_GELIN.id, NPC_GELIN); S.kisiler.set(NPC_DAMAT.id, NPC_DAMAT);
 
+  // Görünen isim (TikTok takma adı); takma ad yoksa @kullanıcıadı
   function kisaAd(k, n = 14) {
     if (!k) return "?";
     if (k.npc) return k.ad;
-    const a = "@" + (k.ad || k.id);
+    const a = (k.ad && k.ad !== k.id) ? k.ad : "@" + k.id;
     return a.length > n ? a.slice(0, n - 1) + "…" : a;
   }
+  // Profil aramak için gerçek kullanıcı adı
+  function tutamak(k, n = 18) { if (!k || k.npc) return ""; const a = "@" + k.id; return a.length > n ? a.slice(0, n - 1) + "…" : a; }
   function cinsiyetAyarla(k, cins) {
     if (!cins || k.npc) return;
     k.cins = cins;
@@ -118,7 +121,7 @@
     if (oneAl) S.kalabalik.splice(onSira(k), 0, k.id); else S.kalabalik.push(k.id);
     k.cx = Math.random() < 0.5 ? -80 : W + 80; k.cy = rnd(1500, 1800);
     k.yeniBitis = simdi() + 6;
-    ses("blip", oneAl);
+    if (simdi() - (S.sonBlip || 0) > 0.3) { S.sonBlip = simdi(); ses("blip", oneAl); }
   }
   function onSira(k) {
     let j = 0;
@@ -687,7 +690,15 @@
   // ------------------------------------------------------------
   //  SOHBET → OLAY
   // ------------------------------------------------------------
-  function yasakli(m) { const k = kucuk(m); return (A.yasakliKelimeler || []).some(y => y && k.includes(kucuk(y))); }
+  // Kelime bazlı filtre: "kelime" tam eşleşir, "kelime*" ile başlayanları da yakalar
+  function yasakli(m) {
+    const kelimeler = kucuk(m).split(/[^a-zçğıöşü0-9*]+/).filter(Boolean);
+    return (A.yasakliKelimeler || []).some(y => {
+      y = kucuk(y).trim(); if (!y) return false;
+      if (y.endsWith("*")) { const kok = y.slice(0, -1); return kelimeler.some(w => w.startsWith(kok)); }
+      return kelimeler.includes(y);
+    });
+  }
   const HAREKET_KOMUT = [
     [/^(oyna|dans|oyna!+)$/, () => sec(["cilgin", "dondu", "kollar", "gobek", "omuz"]), "coskulu"],
     [/^(göbek|gobek|göbek at|gobek at)$/, "gobek", "mutlu"], [/^(zıpla|zipla|hopla)$/, "zipla", "coskulu"],
@@ -702,6 +713,7 @@
     if (o.tip === "yorum") {
       const metin = String(o.metin || "").trim();
       if (!metin || yasakli(metin)) return;
+      if (yasakli(o.ad || "")) o = Object.assign({}, o, { ad: o.id });
       const k = kisi(o);
       const km = kucuk(metin).replace(/[!.?,]+$/g, "").trim();
       const f = S.faz;
@@ -1301,6 +1313,7 @@
     ciftCiz(t, p);
     if (f.ad === "nikah") nikahMasasi(t, false);
     if (f.ad === "final") arabaCiz(t);
+    if (f.ad !== "final") bekarPaneli(t);
     if (S.duello) duelloCiz(t);
     if (p.ekstra === "atanlar") atanlarCiz(t);
     if (p.ekstra === "kaynanaOrtada") { /* kaynanaCiz konumu değiştirir */ }
@@ -1314,6 +1327,15 @@
     if (!p.gGizli) parca.push(["gelin", g, p.g]);
     if (!(S.faz.ad === "final")) parca.push(["damat", d, p.d]);
     parca.sort((a, b) => a[2].y - b[2].y);
+    // İsim rozetleri: çakışırsa birbirinden it
+    c.font = `800 25px ${FONT}`;
+    const rozet = {};
+    for (const [rol, k, o] of parca) rozet[rol] = { w: c.measureText(`👰 ${kisaAd(k, 12)}`).width + 54, x: o.x };
+    if (rozet.gelin && rozet.damat) {
+      const sol = rozet.gelin.x <= rozet.damat.x ? rozet.gelin : rozet.damat, sag = sol === rozet.gelin ? rozet.damat : rozet.gelin;
+      const gerek = (sol.w + sag.w) / 2 + 12 - (sag.x - sol.x);
+      if (gerek > 0) { sol.x -= gerek / 2; sag.x += gerek / 2; }
+    }
     for (const [rol, k, o] of parca) {
       const ek = Object.assign({}, o.ek);
       karakter(k, o.x, o.y, o.s, t, { arketip: rol, hareket: o.hareket, ifade: o.ifade, yon: o.yon, ek, konusuyor: S.npc[rol] && t < S.npc[rol].bitis });
@@ -1321,13 +1343,18 @@
       const tak = S.cift.takilar.filter(x => x.hedef === (rol === "gelin" ? "g" : "d"));
       if (tak.length && !ek.poz) kurdele(o.x, o.y - 100 * o.s, tak, o.s);
       if (ek.kafaPasta) { const hy = o.y - 205 * o.s; pastaKatCiz(o.x, hy, 0.55); }
-      // İsim
+      // İsim rozeti (profil fotoğraflı)
       const ust = o.y - 250 * o.s;
       if (!ek.poz || rol === "gelin") {
-        c.font = `800 26px ${FONT}`;
-        yazi(`${rol === "gelin" ? "👰" : "🤵"} ${kisaAd(k, 14)}`, o.x, Math.max(470, ust - 30), 26, "#fff", "center", 800, 5);
+        const ad = `${rol === "gelin" ? "👰" : "🤵"} ${kisaAd(k, 12)}`;
+        c.font = `800 25px ${FONT}`;
+        const w = c.measureText(ad).width + 54, ey = Math.max(600, o.y - 245 * o.s), ex = sinirla(rozet[rol].x, w / 2 + 8, W - w / 2 - 8);
+        yuvarlak(ex - w / 2, ey, w, 36, 18); c.fillStyle = rol === "gelin" ? "rgba(173,20,87,0.85)" : "rgba(26,35,126,0.85)"; c.fill();
+        c.strokeStyle = "#fff"; c.lineWidth = 2; c.stroke();
+        avatar(k, ex - w / 2 + 18, ey + 18, 15, "#fff", 2);
+        yazi(ad, ex - w / 2 + 38, ey + 19, 25, "#fff", "left", 800, 0);
+        if (S.cift.reis === rol && S.faz.ad !== "nikah") yazi("👑 Evin reisi", ex, ey - 14, 20, "#ffd54a", "center", 800, 4);
       }
-      if (S.cift.reis === (rol === "gelin" ? "gelin" : "damat") && S.faz.ad !== "nikah") yazi("👑 Evin reisi", o.x, Math.max(500, ust), 20, "#ffd54a", "center", 800, 4);
       const nb = S.npc[rol];
       if (nb && t < nb.bitis) balon(nb.metin, o.x, Math.max(560, ust - 50), 28, "#fff", "#3b0a3f", 460);
     }
@@ -1338,6 +1365,20 @@
       const yig = Math.min(40, Math.floor(n / 2));
       for (let i = 0; i < yig; i++) { const sat = Math.floor(Math.sqrt(i * 2)); altinCiz(540 + ((i * 37) % 70) - 35 + sat * 2, 1238 - sat * 9, 11, "#ffc107"); }
     }
+  }
+
+  function bekarPaneli(t) {
+    const x = 742, y = 478, w = 314, h = 84;
+    panel(x, y, w, h, "rgba(60,8,40,0.72)", "rgba(255,128,171,0.6)", 18);
+    const b = S.bekarlar.map(v => S.kisiler.get(v.id)).filter(Boolean);
+    if (b.length) {
+      yazi(`💘 Bekarlar: ${b.length}`, x + 14, y + 22, 21, "#ff80ab", "left", 800, 3);
+      b.slice(-5).forEach((k, i) => avatar(k, x + 170 + i * 28, y + 22, 12, k.cins === "k" ? "#ff80ab" : k.cins === "e" ? "#40c4ff" : "#fff", 2));
+    } else yazi("💘 'bekar' yaz → eşleş!", x + 14, y + 22, 21, "#ff80ab", "left", 800, 3, w - 24);
+    let sira = "💍 Sıradaki çift: kura 🎲";
+    if (S.siradakiCicek) sira = `💐 Sıradaki: ${kisaAd(S.kisiler.get(S.siradakiCicek), 14)}`;
+    else if (S.ciftSirasi.length) { const c0 = S.ciftSirasi[0]; sira = `💍 ${kisaAd(S.kisiler.get(c0.gelin), 10)} ❤ ${kisaAd(S.kisiler.get(c0.damat), 10)}`; }
+    yazi(sira, x + 14, y + 60, 19, "#ffd54a", "left", 800, 3, w - 24);
   }
 
   function kurdele(x, y, takilar, s) {
@@ -1630,6 +1671,7 @@
     yazi("💘 KISMET! 💘", 540, 560, 84, "#ff80ab", "center", 800, 10);
     yazi(`${kisaAd(a, 14)}  ❤  ${kisaAd(b, 14)}`, 540, 650, 42, "#fff", "center", 800, 7, W - 60);
     yazi("Birbirinizin profiline bakın 😉", 540, 1200, 34, "#ffd54a", "center", 800, 6);
+    if (!a.npc && !b.npc) yazi(`${tutamak(a)}  •  ${tutamak(b)}`, 540, 705, 30, "#f8bbd0", "center", 700, 5, W - 60);
     yazi("Sıradaki düğün sizin olabilir! 💍", 540, 1245, 28, "#f8bbd0", "center", 700, 5);
     c.globalAlpha = 1;
   }
@@ -1731,7 +1773,7 @@
     kalabalikCiz(t, nabiz);
     kombolarCiz();
     ucanlarCiz();
-    if (S.kopma) { c.fillStyle = `hsla(${(t * 400) % 360},100%,50%,${0.08 + nabiz * 0.1})`; c.fillRect(0, 0, W, H); }
+    if (S.kopma) { c.fillStyle = `hsla(${(t * 90) % 360},100%,50%,${0.05 + nabiz * 0.05})`; c.fillRect(0, 0, W, H); }
     c.restore();
     ustBilgi(t, nabiz);
     bilgiSatiri(t);
@@ -1741,7 +1783,7 @@
     sovCiz(t, nabiz);
     parcaciklarCiz();
     yazilarCiz();
-    if (S.flas && t - S.flas < 0.5) { c.fillStyle = `rgba(255,255,255,${0.8 * (1 - (t - S.flas) / 0.5)})`; c.fillRect(0, 0, W, H); }
+    if (S.flas && t - S.flas < 0.6) { c.fillStyle = `rgba(255,255,255,${0.4 * (1 - (t - S.flas) / 0.6)})`; c.fillRect(0, 0, W, H); }
     if (S.sonKart) sonKartCiz(t);
   }
 

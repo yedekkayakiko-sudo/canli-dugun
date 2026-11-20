@@ -145,16 +145,16 @@
   // ------------------------------------------------------------
   //  PARÇALAR
   // ------------------------------------------------------------
-  function kol(c, sd, a1, a2, kolRenk, ten, kisaKol) {
+  function kol(c, sd, a1, a2, kolRenk, ten, kisaKol, ince) {
     const ox = sd * 20, oy = -106;
     const ex = ox + sd * Math.sin(a1) * 26, ey = oy + Math.cos(a1) * 26;
     const hx = ex + sd * Math.sin(a2) * 24, hy = ey + Math.cos(a2) * 24;
     c.lineCap = "round"; c.lineJoin = "round";
-    c.lineWidth = 10;
+    c.lineWidth = ince ? 8 : 10;
     c.strokeStyle = kolRenk;
     c.beginPath(); c.moveTo(ox, oy); c.lineTo(ex, ey); if (!kisaKol) c.lineTo(hx, hy); c.stroke();
-    if (kisaKol) { c.strokeStyle = ten; c.lineWidth = 8; c.beginPath(); c.moveTo(ex, ey); c.lineTo(hx, hy); c.stroke(); }
-    c.fillStyle = ten; c.beginPath(); c.arc(hx, hy, 6, 0, TAM); c.fill();
+    if (kisaKol) { c.strokeStyle = ten; c.lineWidth = ince ? 7 : 8; c.beginPath(); c.moveTo(ex, ey); c.lineTo(hx, hy); c.stroke(); }
+    c.fillStyle = ten; c.beginPath(); c.arc(hx, hy, ince ? 5 : 6, 0, TAM); c.fill();
     return [hx, hy, a2];
   }
 
@@ -193,21 +193,49 @@
     c.fillStyle = renk; c.fill(); c.restore();
   }
 
-  function yuz(c, ifade, t, tohum, konusuyor, kadin, ten) {
+  // stil: { ruj, far, kas } — kadınlarda makyaj, erkeklerde kalın kaş
+  function yuz(c, ifade, t, tohum, konusuyor, kadin, ten, stil = {}) {
     const kirp = ((t + tohum * 7.3) % 4.2) < 0.13;
     const bakX = Math.sin(t * 0.7 + tohum) * 1.5, bakY = 0.5;
+    const ruj = stil.ruj;
+    ifade = ifade || "normal";
     c.lineCap = "round"; c.lineJoin = "round";
     // Yanaklar
-    c.fillStyle = "rgba(255,105,120,0.35)";
-    c.beginPath(); c.arc(-19, -2, 6, 0, TAM); c.arc(19, -2, 6, 0, TAM); c.fill();
+    c.fillStyle = stil.far ? "rgba(255,92,128,0.42)" : "rgba(255,105,120,0.35)";
+    c.beginPath(); c.arc(-19, -1, stil.far ? 7 : 6, 0, TAM); c.arc(19, -1, stil.far ? 7 : 6, 0, TAM); c.fill();
+    // Göz farı
+    if (stil.far && !["baygin", "cilgin"].includes(ifade)) {
+      c.fillStyle = stil.far;
+      c.beginPath(); c.ellipse(-12, -11, 10, 6, -0.1, PI, TAM); c.ellipse(12, -11, 10, 6, 0.1, PI, TAM); c.fill();
+    }
+    // Kaşlar (sakin ifadelerde)
+    if (["normal", "mutlu", "coskulu", "kalp", "opucuk", "havali"].includes(ifade)) {
+      c.strokeStyle = kadin ? "#4e342e" : "#2b1b17"; c.lineWidth = kadin ? 2.2 : 4;
+      const kY = ifade === "havali" ? -19 : -20;
+      [-1, 1].forEach(sd => { c.beginPath(); c.moveTo(sd * 6, kY + 1); c.quadraticCurveTo(sd * 13, kY - (kadin ? 5 : 3), sd * 20, kY + (kadin ? 1 : 0)); c.stroke(); });
+    }
     const kas = (x1, y1, x2, y2) => { c.strokeStyle = "#3e2723"; c.lineWidth = 3; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); };
     const agizAcik = (w, h, y = 12) => {
       c.fillStyle = "#7b1f2a"; c.beginPath(); c.moveTo(-w, y); c.quadraticCurveTo(0, y + h * 2, w, y); c.closePath(); c.fill();
       c.fillStyle = "#ff8a80"; c.beginPath(); c.ellipse(0, y + h * 0.75, w * 0.45, h * 0.35, 0, 0, TAM); c.fill();
+      if (ruj) { c.strokeStyle = ruj; c.lineWidth = 3.2; c.beginPath(); c.moveTo(-w, y); c.quadraticCurveTo(0, y + h * 2, w, y); c.quadraticCurveTo(0, y - 2, -w, y); c.stroke(); }
     };
-    const gulumse = () => { c.strokeStyle = "#7b1f2a"; c.lineWidth = 3; c.beginPath(); c.arc(0, 6, 10, 0.25 * PI, 0.75 * PI); c.stroke(); };
+    const dudak = () => {
+      c.fillStyle = ruj;
+      c.beginPath(); c.moveTo(-10, 12); c.quadraticCurveTo(-5, 6, 0, 9); c.quadraticCurveTo(5, 6, 10, 12); c.quadraticCurveTo(0, 21, -10, 12); c.fill();
+      c.strokeStyle = "rgba(90,0,30,0.45)"; c.lineWidth = 1.2; c.beginPath(); c.moveTo(-9, 12); c.quadraticCurveTo(0, 14.5, 9, 12); c.stroke();
+      c.fillStyle = "rgba(255,255,255,0.45)"; c.beginPath(); c.ellipse(3, 15, 3, 1.3, 0, 0, TAM); c.fill();
+    };
+    const gulumse = () => { if (ruj) return dudak(); c.strokeStyle = "#7b1f2a"; c.lineWidth = 3; c.beginPath(); c.arc(0, 6, 10, 0.25 * PI, 0.75 * PI); c.stroke(); };
     const mutluGoz = (y = -6) => { c.strokeStyle = "#2b1b17"; c.lineWidth = 3.5; c.beginPath(); c.arc(-12, y + 3, 6, PI * 1.1, PI * 1.9); c.stroke(); c.beginPath(); c.arc(12, y + 3, 6, PI * 1.1, PI * 1.9); c.stroke(); };
-    const kirpikler = () => { if (!kadin) return; c.strokeStyle = "#2b1b17"; c.lineWidth = 2; [-1, 1].forEach(sd => { c.beginPath(); c.moveTo(sd * 17, -10); c.lineTo(sd * 21, -14); c.stroke(); }); };
+    const kirpikler = () => {
+      if (!kadin) return;
+      c.strokeStyle = "#1a0f0c"; c.lineWidth = stil.far ? 2.4 : 2;
+      [-1, 1].forEach(sd => {
+        for (let i = 0; i < (stil.far ? 3 : 2); i++) { c.beginPath(); c.moveTo(sd * (15 + i * 2.5), -10 - i * 0.5); c.lineTo(sd * (19 + i * 3), -15 + i * 1.5); c.stroke(); }
+        if (stil.far) { c.lineWidth = 2.2; c.beginPath(); c.moveTo(sd * 17, -7); c.lineTo(sd * 22, -10); c.stroke(); }   // eyeliner kuyruğu
+      });
+    };
 
     switch (ifade) {
       case "mutlu": case "coskulu":
@@ -268,7 +296,8 @@
         else { goz(c, -12, -6, 6.5, bakX, bakY); goz(c, 12, -6, 6.5, bakX, bakY); }
         if (konusuyor) agizAcik(8, 3 + Math.abs(Math.sin(t * 14)) * 6, 10); else gulumse();
     }
-    if (["mutlu", "normal", "coskulu", "kalp", "gergin", "dusunceli", undefined].includes(ifade)) kirpikler();
+    if (!["baygin", "cilgin", "havali"].includes(ifade)) kirpikler();
+    if (ruj && ["sok", "gergin", "dusunceli", "kizgin"].includes(ifade)) { c.fillStyle = ruj; c.globalAlpha = 0.55; c.beginPath(); c.ellipse(0, 14, 8, 4, 0, 0, TAM); c.fill(); c.globalAlpha = 1; }
   }
 
   // ------------------------------------------------------------
@@ -287,7 +316,17 @@
       c.fillStyle = "#b39ddb";
       for (let i = 0; i < 9; i++) { const aa = PI * 1.0 + (i / 8) * PI; c.beginPath(); c.arc(Math.cos(aa) * 33, Math.sin(aa) * 36 - 4, 16, 0, TAM); c.fill(); }
     } else if (a === "gelin") {
-      c.fillStyle = "#3e2723"; c.beginPath(); c.arc(0, -30, 17, 0, TAM); c.fill();
+      const sal = Math.sin(t * 2.5) * 3;
+      c.fillStyle = renk;
+      c.beginPath(); c.ellipse(0, 10, 41, 50, 0, 0, TAM); c.fill();
+      [-1, 1].forEach(sd => {
+        c.beginPath(); c.moveTo(sd * 30, 0);
+        c.bezierCurveTo(sd * (50 + sal), 30, sd * (34 - sal), 52, sd * (46 + sal), 84);
+        c.quadraticCurveTo(sd * 30, 96, sd * 18, 74);
+        c.quadraticCurveTo(sd * 26, 44, sd * 14, 20); c.closePath(); c.fill();
+      });
+      c.strokeStyle = "rgba(255,255,255,0.18)"; c.lineWidth = 2;
+      [-1, 1].forEach(sd => { c.beginPath(); c.moveTo(sd * 36, 10); c.quadraticCurveTo(sd * 44, 40, sd * 38, 70); c.stroke(); });
     } else if (a === "teyze") {
       c.fillStyle = renk; c.beginPath(); c.arc(0, 2, 40, 0, TAM); c.fill();
       c.beginPath(); c.moveTo(-14, 34); c.lineTo(0, 54); c.lineTo(14, 34); c.fill();
@@ -345,15 +384,39 @@
         c.fillStyle = "#e91e63"; c.beginPath(); c.ellipse(0, 13, 6, 3.5, 0, 0, TAM); c.fill();
         break;
       case "gelin": {
-        c.fillStyle = "#3e2723"; c.beginPath(); c.arc(0, -6, 34, PI * 1.05, PI * 1.95); c.quadraticCurveTo(0, -20, -32, -12); c.fill();
+        // Hacimli üst saç + yana taranmış perçem
+        c.fillStyle = renk;
+        c.beginPath(); c.arc(0, -4, 36, PI * 1.02, PI * 1.98);
+        c.bezierCurveTo(26, -20, 12, -28, -2, -24);
+        c.bezierCurveTo(-12, -21, -24, -17, -34, -8);
+        c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(-36, -2); c.quadraticCurveTo(-40, 18, -32, 34); c.lineTo(-28, 10); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(36, -2); c.quadraticCurveTo(40, 18, 32, 34); c.lineTo(28, 10); c.closePath(); c.fill();
+        c.strokeStyle = "rgba(255,255,255,0.22)"; c.lineWidth = 2.5; c.beginPath(); c.arc(4, -6, 28, PI * 1.25, PI * 1.6); c.stroke();
+        // Taç
         c.fillStyle = "#ffd54a";
-        c.beginPath(); c.moveTo(-18, -30); for (let i = 0; i <= 6; i++) c.lineTo(-18 + i * 6, i % 2 ? -46 + (i === 3 ? -6 : 0) : -32); c.closePath(); c.fill();
-        c.fillStyle = "#e91e63"; c.beginPath(); c.arc(0, -44, 3, 0, TAM); c.fill();
+        c.beginPath(); c.moveTo(-20, -30);
+        [[-20, -42], [-13, -34], [-7, -48], [0, -36], [7, -48], [13, -34], [20, -42], [20, -30]].forEach(([x, y]) => c.lineTo(x, y));
+        c.closePath(); c.fill();
+        c.fillStyle = "#ffffff"; [[-7, -44], [7, -44], [-20, -39], [20, -39]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 2.2, 0, TAM); c.fill(); });
+        c.fillStyle = "#e91e63"; c.beginPath(); c.arc(0, -38, 3.2, 0, TAM); c.fill();
+        // Küpeler
+        const sal = Math.sin(t * 4) * 1.5;
+        [-1, 1].forEach(sd => {
+          c.fillStyle = "#ffd54a"; c.beginPath(); c.arc(sd * 31, 12, 3, 0, TAM); c.fill();
+          c.beginPath(); c.moveTo(sd * 31 + sal, 14); c.quadraticCurveTo(sd * 35 + sal, 22, sd * 31 + sal, 26); c.quadraticCurveTo(sd * 27 + sal, 22, sd * 31 + sal, 14); c.fill();
+        });
         break;
       }
       case "damat":
-        c.fillStyle = "#2b1b17"; c.beginPath(); c.arc(0, -8, 34, PI * 1.02, PI * 1.98); c.quadraticCurveTo(-4, -24, -33, -10); c.fill();
-        c.strokeStyle = "rgba(255,255,255,0.25)"; c.lineWidth = 2; c.beginPath(); c.moveTo(-10, -36); c.quadraticCurveTo(4, -40, 16, -34); c.stroke();
+        // Gölge sakal
+        c.fillStyle = "rgba(60,40,30,0.18)"; c.beginPath(); c.arc(0, 4, 30, 0.12 * PI, 0.88 * PI); c.closePath(); c.fill();
+        // Havalı, yukarı taranmış saç
+        c.fillStyle = "#2b1b17";
+        c.beginPath(); c.moveTo(-34, -4); c.quadraticCurveTo(-38, -30, -18, -40);
+        c.quadraticCurveTo(-4, -54, 16, -48); c.quadraticCurveTo(34, -44, 36, -20); c.quadraticCurveTo(36, -10, 33, -4);
+        c.quadraticCurveTo(26, -22, 8, -24); c.quadraticCurveTo(-14, -26, -26, -16); c.quadraticCurveTo(-31, -10, -34, -4); c.fill();
+        c.strokeStyle = "rgba(255,255,255,0.3)"; c.lineWidth = 2.5; c.beginPath(); c.moveTo(-14, -40); c.quadraticCurveTo(2, -50, 20, -42); c.stroke();
         break;
       case "kaynana":
         c.strokeStyle = "#5d4037"; c.lineWidth = 2; c.beginPath(); c.arc(-12, -6, 9, 0, TAM); c.moveTo(21, -6); c.arc(12, -6, 9, 0, TAM); c.stroke();
@@ -416,11 +479,12 @@
       const gen = g === "gelinlik" ? 56 : 36, alt = -3;
       const sw = hx * 0.7;
       c.fillStyle = r.govde;
-      c.beginPath(); c.moveTo(-19, -66); c.lineTo(19, -66);
-      c.quadraticCurveTo(gen * 0.8 + sw, -30, gen + sw, alt);
+      const bel = g === "gelinlik" ? 13 : 19;
+      c.beginPath(); c.moveTo(-bel, -68); c.lineTo(bel, -68);
+      c.quadraticCurveTo(gen * 0.75 + sw, -34, gen + sw, alt);
       if (g === "gelinlik") { for (let i = 0; i <= 8; i++) { const x = gen + sw - i * (gen * 2) / 8; c.quadraticCurveTo(x - gen / 8, alt + 7, x - gen / 4 + (i === 8 ? gen / 4 : 0), alt); } }
       else c.lineTo(-gen + sw, alt);
-      c.quadraticCurveTo(-gen * 0.8 + sw, -30, -19, -66); c.closePath(); c.fill();
+      c.quadraticCurveTo(-gen * 0.75 + sw, -34, -bel, -68); c.closePath(); c.fill();
       if (g === "gelinlik") {
         c.strokeStyle = "rgba(200,180,220,0.6)"; c.lineWidth = 1.5;
         for (let i = 1; i < 4; i++) { c.beginPath(); c.moveTo(-gen + sw + 6, alt - i * 14); c.quadraticCurveTo(sw, alt - i * 14 + 6, gen + sw - 6, alt - i * 14); c.stroke(); }
@@ -428,9 +492,31 @@
       if (a === "teyze") { c.fillStyle = "rgba(255,255,255,0.55)"; for (let i = 0; i < 9; i++) { c.beginPath(); c.arc(-22 + (i % 3) * 20 + sw * 0.5, -48 + Math.floor(i / 3) * 15, 3.2, 0, TAM); c.fill(); } }
       if (a === "abla") { for (let i = 0; i < 10; i++) { const on = Math.sin(t * 6 + i * 2.1) > 0.3; if (on) { c.fillStyle = "#fff"; c.beginPath(); c.arc(-24 + ((i * 37) % 48) + sw * 0.5, -60 + ((i * 23) % 52), 2.2, 0, TAM); c.fill(); } } }
       // üst
+      if (g === "gelinlik") {
+        // Omuzlar / boyun (açık)
+        c.fillStyle = ek.ten; yuvarlakDik(c, -20, -116, 40, 22, 10); c.fill();
+        // Kolye
+        c.strokeStyle = "#ffd54a"; c.lineWidth = 1.8; c.beginPath(); c.arc(0, -116, 10, 0.2 * PI, 0.8 * PI); c.stroke();
+        c.fillStyle = "#ffd54a"; c.beginPath(); c.arc(0, -105.5, 2.6, 0, TAM); c.fill();
+        // Kalp yakalı korse + ince bel
+        c.fillStyle = r.govde;
+        c.beginPath(); c.moveTo(-20, -101);
+        c.quadraticCurveTo(-11, -110, 0, -100); c.quadraticCurveTo(11, -110, 20, -101);
+        c.quadraticCurveTo(18, -86, 13, -70); c.lineTo(-13, -70); c.quadraticCurveTo(-18, -86, -20, -101);
+        c.closePath(); c.fill();
+        c.strokeStyle = "rgba(190,170,215,0.7)"; c.lineWidth = 1.2;
+        c.beginPath(); c.moveTo(-20, -101); c.quadraticCurveTo(-11, -110, 0, -100); c.quadraticCurveTo(11, -110, 20, -101); c.stroke();
+        for (let i = 0; i < 6; i++) if (Math.sin(t * 5 + i * 2.3) > 0.1) { c.fillStyle = "#fff"; c.beginPath(); c.arc(-10 + (i % 3) * 10, -94 + Math.floor(i / 3) * 12, 1.6, 0, TAM); c.fill(); }
+        // Kırmızı kuşak + fiyonk
+        c.fillStyle = "#e53935"; c.fillRect(-14, -72, 28, 6);
+        c.beginPath(); c.ellipse(-6, -69, 6, 4, -0.4, 0, TAM); c.ellipse(6, -69, 6, 4, 0.4, 0, TAM); c.fill();
+        c.beginPath(); c.moveTo(-2, -67); c.lineTo(-7, -54); c.lineTo(-3, -55); c.lineTo(1, -67); c.moveTo(2, -67); c.lineTo(7, -54); c.lineTo(3, -55); c.lineTo(-1, -67); c.fill();
+        // Etekte ışıltı
+        for (let i = 0; i < 12; i++) if (Math.sin(t * 4 + i * 1.9) > 0.35) { c.fillStyle = "#fff"; c.beginPath(); c.arc(-40 + ((i * 29) % 80) + hx * 0.4, -54 + ((i * 17) % 46), 1.8, 0, TAM); c.fill(); }
+        return;
+      }
       yuvarlakDik(c, -21, -114, 42, 52, 14); c.fillStyle = a === "nine" ? r.koyu : r.govde; c.fill();
       if (a === "nine") { c.fillStyle = "#8d6e63"; c.fillRect(-6, -112, 12, 48); }
-      if (g === "gelinlik") { c.fillStyle = "#e53935"; c.fillRect(-21, -70, 42, 8); c.beginPath(); c.moveTo(4, -66); c.lineTo(12, -44); c.lineTo(18, -46); c.lineTo(10, -66); c.fill(); }
       if (a === "kaynana") { c.fillStyle = "#fff"; for (let i = 0; i < 7; i++) { c.beginPath(); c.arc(-12 + i * 4, -108 + Math.sin((i / 6) * PI) * 6, 2.5, 0, TAM); c.fill(); } }
       return;
     }
@@ -510,6 +596,10 @@
     const z = ek.poz || poz(o.hareket || "dur", o.vurus || 0, o.t, o.tohum || 0, o.yon || 1);
     const s = o.s * (T.olcek || 1);
     const kadin = ["teyze", "nine", "abla", "kuzenK", "gelin", "kaynana"].includes(a);
+    if (a === "gelin") { r.sac = ["#3b2314", "#5d3a22", "#1c1210", "#c8964f", "#8a3b1c", "#4a2c1a"][Math.floor((o.ton || 0) / 60) % 6]; r.kol = ten; }
+    const stil = a === "gelin" ? { ruj: "#d81b60", far: "rgba(186,104,200,0.45)" }
+      : a === "abla" ? { ruj: "#e91e63", far: "rgba(64,196,255,0.4)" }
+      : (a === "kuzenK" || a === "kaynana") ? { ruj: "#e5397a" } : kadin ? { ruj: "#c2185b" } : {};
 
     c.save();
     c.translate(o.x, o.y);
@@ -547,8 +637,8 @@
     c.translate(0, -118); c.rotate(z.kafa); c.translate(0, -32);
     sacArka(c, a, r.sac, o.t, ek);
     c.fillStyle = ten; c.beginPath(); c.arc(0, 0, a === "teyze" ? 30 : 34, 0, TAM); c.fill();
-    if (a !== "teyze") { c.beginPath(); c.arc(-33, 0, 7, 0, TAM); c.arc(33, 0, 7, 0, TAM); c.fill(); }
-    yuz(c, ek.gozluk ? "havali" : (o.ifade || "normal"), o.t, o.tohum || 0, o.konusuyor, kadin, ten);
+    if (!["teyze", "gelin", "kuzenK", "abla", "kaynana", "nine"].includes(a)) { c.beginPath(); c.arc(-33, 0, 7, 0, TAM); c.arc(33, 0, 7, 0, TAM); c.fill(); }
+    yuz(c, ek.gozluk ? "havali" : (o.ifade || "normal"), o.t, o.tohum || 0, o.konusuyor, kadin, ten, stil);
     sacOn(c, a, r.sac, o.t, ek);
     if (ek.kremali) {
       c.fillStyle = "#fffdf5";
@@ -572,8 +662,8 @@
 
     // Kollar + eşyalar
     const kisa = r.kisaKol;
-    const elL = kol(c, -1, z.kL[0], z.kL[1], r.kol, ten, kisa);
-    const elR = kol(c, 1, z.kR[0], z.kR[1], r.kol, ten, kisa);
+    const elL = kol(c, -1, z.kL[0], z.kL[1], r.kol, ten, kisa, kadin);
+    const elR = kol(c, 1, z.kR[0], z.kR[1], r.kol, ten, kisa, kadin);
     let esya = ek.esya !== undefined ? ek.esya : T.esya;
     if (o.hareket === "kasik") { esyaCiz(c, "kasik", elL, o.t); esyaCiz(c, "kasik", elR, o.t); esya = null; }
     if (ek.mendil) esyaCiz(c, "mendil", elL, o.t);
